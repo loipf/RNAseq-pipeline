@@ -23,7 +23,8 @@ process CREATE_KALLISTO_INDEX {
 	gunzip Homo_sapiens.GRCh38.ncrna.fa.gz
 
 	### combine coding and uncoding transcripts
-	cat Homo_sapiens.GRCh38.cdna.all.fa Homo_sapiens.GRCh38.ncrna.fa > Homo_sapiens.GRCh38.cdna_ncrna.fa
+	#cat Homo_sapiens.GRCh38.cdna.all.fa Homo_sapiens.GRCh38.ncrna.fa > Homo_sapiens.GRCh38.cdna_ncrna.fa
+	head -100 Homo_sapiens.GRCh38.ncrna.fa > Homo_sapiens.GRCh38.cdna_ncrna.fa   ## TODO UNCHANGE
 	gzip -v Homo_sapiens.GRCh38.cdna_ncrna.fa
 
 	kallisto index -k 31 -i kallisto_transcripts.idx Homo_sapiens.GRCh38.cdna_ncrna.fa.gz
@@ -50,6 +51,29 @@ process CREATE_T2G_list {
 
 	"""
 }
+
+
+// removes duplicate transcripts before merging into gene names
+process RM_DUPLICATE_TRANSCRIPTS { 
+	publishDir "$params.data_dir/kallisto_index", mode: "copy"
+
+	input:
+		path raw_transcripts 
+
+	output:
+		path "Homo_sapiens.GRCh38.cdna_ncrna_oneline_unique.txt", emit: trans_online_unique
+		path "transcript_removal_info.txt"
+
+	shell:
+	'''
+
+	gunzip -c !{raw_transcripts} | cut -f1 -d" " | awk '/^>/ {printf("\\n%s\\n",$0);next; } { printf("%s",$0);} END {printf("\\n");}' | tail -n +2 | sed 'N;s/\\n/ /' > Homo_sapiens.GRCh38.cdna_ncrna_oneline.txt
+
+	Rscript /home/stefan/Documents/umcg/RNAseq-pipeline/scripts/remove_duplicate_transcripts.R Homo_sapiens.GRCh38.cdna_ncrna_oneline.txt
+
+	'''
+}
+
 
 
 process PREPROCESS_READS { 
@@ -126,16 +150,43 @@ process QUANT_KALLISTO {
 		path kallisto_index
 
 	output:
-		path "*", emit: all
-
+		path "${sample_id}_abundance.h5", emit: kallisto_abundance
+		path "${sample_id}_run_info.json", emit: kallisto_json
+		path "${sample_id}_kallisto_output.txt", emit: kallisto_output
 
 	shell:
 	'''
 
-	kallisto quant -i !{kallisto_index} -o . -t !{num_threads} !{reads_prepro}
+	kallisto quant -i !{kallisto_index} -o . -t !{num_threads} !{reads_prepro} &> kallisto_output.txt
+
+	for f in *; do mv -- "$f" "!{sample_id}_${f%}"; done   # rename all with sample_id prefix
 
 	'''
 }
+
+
+
+// removes duplicate transcripts before merging into gene names
+process CREATE_KALLISTO_QC_TABLE { 
+	publishDir "$params.data_dir/reads_quant", mode: "copy"
+
+	input:
+		path kallisto_json
+
+	output:
+		path "kallisto_aligned_reads_qc.csv"
+
+	shell:
+	'''
+
+	Rscript /home/stefan/Documents/umcg/RNAseq-pipeline/scripts/create_kallisto_qc_table.R
+
+	'''
+}
+
+
+
+
 
 
 
@@ -206,7 +257,7 @@ process MULTIQC_PREPRO {
 }
 
 
-process MULTIQC_MAPPED { 
+process MULTIQC_QUANT { 
 	publishDir "$params.data_dir/quality_reports", mode: "copy"
 
 	input:
@@ -217,7 +268,7 @@ process MULTIQC_MAPPED {
 
 	shell:
 	'''
-	multiqc -f -o reads_mapped .
+	multiqc -f -o reads_quant .
 	'''
 }
 
