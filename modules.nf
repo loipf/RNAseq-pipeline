@@ -33,7 +33,7 @@ process CREATE_KALLISTO_INDEX {
 
 
 
-process CREATE_T2G_list { 
+process CREATE_T2G_LIST { 
 	publishDir "$params.data_dir", mode: "copy"
 
 	input:
@@ -55,14 +55,14 @@ process CREATE_T2G_list {
 
 // removes duplicate transcripts before merging into gene names
 process RM_DUPLICATE_TRANSCRIPTS { 
-	publishDir "$params.data_dir/kallisto_index", mode: "copy"
+	publishDir "$params.data_dir/kallisto_index", pattern:"Homo*", mode: "copy"
 
 	input:
 		path raw_transcripts 
 
 	output:
-		path "Homo_sapiens.GRCh38.cdna_ncrna_oneline_unique.txt", emit: trans_online_unique
-		path "transcript_removal_info.txt"
+		path "Homo_sapiens.GRCh38.cdna_ncrna_oneline_unique.txt", emit: trans_oneline_unique
+		path "kallisto_removal_info.txt", emit: removal_info
 
 	shell:
 	'''
@@ -168,13 +168,11 @@ process QUANT_KALLISTO {
 
 // removes duplicate transcripts before merging into gene names
 process CREATE_KALLISTO_QC_TABLE { 
-	publishDir "$params.data_dir/reads_quant", mode: "copy"
-
 	input:
 		path kallisto_json
 
 	output:
-		path "kallisto_aligned_reads_qc.csv"
+		path "kallisto_aligned_reads_qc.csv", emit: kallisto_qc_table
 
 	shell:
 	'''
@@ -183,6 +181,31 @@ process CREATE_KALLISTO_QC_TABLE {
 
 	'''
 }
+
+
+process CREATE_GENE_MATRIX { 
+	publishDir "$params.data_dir", mode: "copy"
+
+	input:
+		path kallisto_qc_table
+		path removal_info
+		path trans_oneline_unique
+		path t2g_list
+		path kallisto_abundance
+		
+	output:
+		path "kallisto_gene_counts.csv"
+		path "kallisto_gene_counts_norm_sf_vst.csv"
+		path "kallisto_aligned_reads_qc.csv"
+
+	shell:
+	'''
+
+	Rscript /home/stefan/Documents/umcg/RNAseq-pipeline/scripts/create_kallisto_gene_matrix.R !{kallisto_qc_table} !{removal_info} !{trans_oneline_unique} !{t2g_list}
+
+	'''
+}
+
 
 
 

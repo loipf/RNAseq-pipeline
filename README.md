@@ -20,6 +20,8 @@ now either replace the Docker container hash (last output line from previous bui
 ---
 ### run mapping pipeline
 
+no preprocessing or quality fitering is performed and need to be done by the user! (check file `kallisto_aligned_reads_qc.csv` for `p_pseudoaligned` >70% and `DESeq2_size_factor` around 0.7-1.3)
+
 it can be run locally with downloaded github-repo and edited `nextflow.config` file with:
 ```sh
 nextflow run main.nf
@@ -42,7 +44,10 @@ optional extendable with:
 ```
 
 
-by default, all output will be saved into the `data` folder of the current directory
+by default, all output will be saved into the `data` folder of the current directory.
+
+
+
 
 
 

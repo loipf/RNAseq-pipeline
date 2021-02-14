@@ -13,13 +13,14 @@ nextflow.enable.dsl=2
 
 include { 
 	CREATE_KALLISTO_INDEX;
-	CREATE_T2G_list;
+	CREATE_T2G_LIST;
 	RM_DUPLICATE_TRANSCRIPTS;
 	PREPROCESS_READS;
 	FASTQC_READS_RAW;
 	FASTQC_READS_PREPRO;
 	QUANT_KALLISTO;
 	CREATE_KALLISTO_QC_TABLE;
+	CREATE_GENE_MATRIX;
 	MULTIQC_RAW;
 	MULTIQC_PREPRO;
 	MULTIQC_QUANT;
@@ -76,22 +77,22 @@ workflow {
 
 
 	CREATE_KALLISTO_INDEX(params.ensembl_release) 
-	CREATE_T2G_list(CREATE_KALLISTO_INDEX.out.raw_transcripts)
+	CREATE_T2G_LIST(CREATE_KALLISTO_INDEX.out.raw_transcripts)
 	RM_DUPLICATE_TRANSCRIPTS(CREATE_KALLISTO_INDEX.out.raw_transcripts)
 
 	PREPROCESS_READS(channel_reads, params.num_threads)
 	channel_reads_prepro = PREPROCESS_READS.out.reads_prepro.map{ it -> tuple(it[0], tuple(it[1], it[2])) }
-	FASTQC_READS_RAW(channel_reads, params.num_threads)
-	FASTQC_READS_PREPRO(channel_reads_prepro, params.num_threads)
+	//FASTQC_READS_RAW(channel_reads, params.num_threads)
+	//FASTQC_READS_PREPRO(channel_reads_prepro, params.num_threads)
 	
 	QUANT_KALLISTO(channel_reads_prepro, params.num_threads, CREATE_KALLISTO_INDEX.out.kallisto_index)
 	CREATE_KALLISTO_QC_TABLE(QUANT_KALLISTO.out.kallisto_json.collect())
+	CREATE_GENE_MATRIX(CREATE_KALLISTO_QC_TABLE.out.kallisto_qc_table, RM_DUPLICATE_TRANSCRIPTS.out.removal_info, RM_DUPLICATE_TRANSCRIPTS.out.trans_oneline_unique, CREATE_T2G_LIST.out.t2g_list, QUANT_KALLISTO.out.kallisto_abundance.collect() )
 
 
-
-	MULTIQC_RAW(FASTQC_READS_RAW.out.reports.collect() )
-	MULTIQC_PREPRO(FASTQC_READS_PREPRO.out.reports.concat(PREPROCESS_READS.out.cutadapt).collect() )
-	MULTIQC_QUANT(QUANT_KALLISTO.out.kallisto_output.collect())
+	//MULTIQC_RAW(FASTQC_READS_RAW.out.reports.collect() )
+	//MULTIQC_PREPRO(FASTQC_READS_PREPRO.out.reports.concat(PREPROCESS_READS.out.cutadapt).collect() )
+	//MULTIQC_QUANT(QUANT_KALLISTO.out.kallisto_output.collect())
 
 }
 

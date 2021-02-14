@@ -19,11 +19,14 @@ num_identical_transcripts = nrow(trans_table[,.N,by=V2][N!=1])
 
 ### pick first one of duplicates 
 trans_table_short = trans_table[, .SD[1,], by = V2]
-fwrite(trans_table_short[, c(2,1)], "Homo_sapiens.GRCh38.cdna_ncrna_oneline_unique.txt", sep="\t", col.names = F) 
+trans_table_short = trans_table_short[, c(2,1)]
+trans_table_short[,1] = sub(">", "", trans_table_short[[1]])
+
+fwrite(trans_table_short[,1,drop=F], "Homo_sapiens.GRCh38.cdna_ncrna_oneline_unique.txt", sep="\t", col.names = F) 
 
 
 ### write numbers to output
-sink('transcript_removal_info.txt')
+sink('kallisto_removal_info.txt')
 
 cat("### remove 100% sequence identity transcripts to avoid gene mapping bias\n")
 cat("number of unique identical transcripts found: ",num_identical_transcripts,"\n")
