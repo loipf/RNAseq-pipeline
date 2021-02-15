@@ -1,30 +1,28 @@
-#!/usr/bin/env Rscript
-
 #' ---
 #' title: "gene count performance analysis"
 #' author: "loipf"
 #'
 #' output: html_document
 #' code_folding: hide
+#' 
+#' params:
+#'    curr_dir: NULL
+#'    reads_qc_table_file: NULL
+#'    gene_matrix_file: NULL
+#'    gene_matrix_file_vst: NULL
 #' ---
 
 pacman::p_load(knitr, data.table, plotly, ggplot2, pheatmap, vsn, hexbin, LSD, cowplot)
 
+#READS_QC_TABLE_FILE = "/home/stefan/Documents/umcg/RNAseq-pipeline/data/kallisto_aligned_reads_qc.csv"
+#GENE_MATRIX_FILE = "/home/stefan/Documents/umcg/RNAseq-pipeline/data/kallisto_gene_counts.csv"
+#GENE_MATRIX_FILE_VST = "/home/stefan/Documents/umcg/RNAseq-pipeline/data/kallisto_gene_counts_norm_sf_vst.csv"
 
-# ### DOES NOT WORK WITH NEXTFLOW# args = commandArgs(trailingOnly=TRUE)
-# READS_QC_TABLE_FILE = args[1]
-# GENE_MATRIX_FILE = args[2]
-# GENE_MATRIX_FILE_VST = args[3]
+READS_QC_TABLE_FILE = file.path(curr_dir, params$reads_qc_table_file)
+GENE_MATRIX_FILE = file.path(curr_dir, params$gene_matrix_file)
+GENE_MATRIX_FILE_VST = file.path(curr_dir, params$gene_matrix_file_vst)
 
-READS_QC_TABLE_FILE = "/home/stefan/Documents/umcg/RNAseq-pipeline/data/kallisto_aligned_reads_qc.csv"
-GENE_MATRIX_FILE = "/home/stefan/Documents/umcg/RNAseq-pipeline/data/kallisto_gene_counts.csv"
-GENE_MATRIX_FILE_VST = "/home/stefan/Documents/umcg/RNAseq-pipeline/data/kallisto_gene_counts_norm_sf_vst.csv"
-
-READS_QC_TABLE_FILE = "kallisto_aligned_reads_qc.csv"
-GENE_MATRIX_FILE = "kallisto_gene_counts.csv"
-GENE_MATRIX_FILE_VST = "kallisto_gene_counts_norm_sf_vst.csv"
-
-### read in everything
+# ### read in everything
 reads_qc_table =  data.frame(fread(READS_QC_TABLE_FILE, header = T), stringsAsFactors = FALSE, row.names = 1)
 gene_matrix =  data.frame(fread(GENE_MATRIX_FILE, header = T), stringsAsFactors = FALSE, row.names = 1)  ### genes x samples
 gene_matrix_vst =  data.frame(fread(GENE_MATRIX_FILE_VST, header = T), stringsAsFactors = FALSE, row.names = 1)

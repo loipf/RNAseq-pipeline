@@ -34,21 +34,20 @@ include {
  * default parameters
  */ 
 
-params.dev_samples = 3
+params.dev_samples = -1
 
 params.project_dir	= "$projectDir"
 params.reads_dir	= "$params.project_dir/data/reads_raw"
 
 params.reads		= "$params.reads_dir/*/*_{1,2}.{fastq,fq}.gz"
 params.data_dir		= "$params.project_dir/data"
-params.scripts_dir	= "$params.project_dir/scripts"
 
 
 /*
  * other parameters
  */
 
-params.num_threads		= 2
+params.num_threads		= 5
 params.ensembl_release	= 101
 
 
@@ -83,8 +82,8 @@ workflow {
 
 	PREPROCESS_READS(channel_reads, params.num_threads)
 	channel_reads_prepro = PREPROCESS_READS.out.reads_prepro.map{ it -> tuple(it[0], tuple(it[1], it[2])) }
-	//FASTQC_READS_RAW(channel_reads, params.num_threads)
-	//FASTQC_READS_PREPRO(channel_reads_prepro, params.num_threads)
+	FASTQC_READS_RAW(channel_reads, params.num_threads)
+	FASTQC_READS_PREPRO(channel_reads_prepro, params.num_threads)
 	
 	QUANT_KALLISTO(channel_reads_prepro, params.num_threads, CREATE_KALLISTO_INDEX.out.kallisto_index)
 	CREATE_KALLISTO_QC_TABLE(QUANT_KALLISTO.out.kallisto_json.collect())
@@ -92,9 +91,9 @@ workflow {
 
 	CREATE_GENE_COUNT_PLOTS(CREATE_GENE_MATRIX.out.kallisto_qc_table, CREATE_GENE_MATRIX.out.gene_matrix, CREATE_GENE_MATRIX.out.gene_matrix_vst)
 
-	//MULTIQC_RAW(FASTQC_READS_RAW.out.reports.collect() )
-	//MULTIQC_PREPRO(FASTQC_READS_PREPRO.out.reports.concat(PREPROCESS_READS.out.cutadapt).collect() )
-	//MULTIQC_QUANT(QUANT_KALLISTO.out.kallisto_output.collect())
+	MULTIQC_RAW(FASTQC_READS_RAW.out.reports.collect() )
+	MULTIQC_PREPRO(FASTQC_READS_PREPRO.out.reports.concat(PREPROCESS_READS.out.cutadapt).collect() )
+	MULTIQC_QUANT(QUANT_KALLISTO.out.kallisto_output.collect())
 
 }
 

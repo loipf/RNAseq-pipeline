@@ -2,6 +2,7 @@
 
 // need params.data_dir declared in main.nf, not implemented in DSL2 yet
 params.data_dir	= "$launchDir/data"
+params.bin_dir	= "$launchDir/bin"
 
 
 process CREATE_KALLISTO_INDEX { 
@@ -23,8 +24,8 @@ process CREATE_KALLISTO_INDEX {
 	gunzip Homo_sapiens.GRCh38.ncrna.fa.gz
 
 	### combine coding and uncoding transcripts
-	#cat Homo_sapiens.GRCh38.cdna.all.fa Homo_sapiens.GRCh38.ncrna.fa > Homo_sapiens.GRCh38.cdna_ncrna.fa
-	head -500 Homo_sapiens.GRCh38.ncrna.fa > Homo_sapiens.GRCh38.cdna_ncrna.fa   ## TODO UNCHANGE
+	cat Homo_sapiens.GRCh38.cdna.all.fa Homo_sapiens.GRCh38.ncrna.fa > Homo_sapiens.GRCh38.cdna_ncrna.fa
+	#head -500 Homo_sapiens.GRCh38.ncrna.fa > Homo_sapiens.GRCh38.cdna_ncrna.fa   ### TODO only small test set
 	gzip -v Homo_sapiens.GRCh38.cdna_ncrna.fa
 
 	kallisto index -k 31 -i kallisto_transcripts.idx Homo_sapiens.GRCh38.cdna_ncrna.fa.gz
@@ -114,7 +115,7 @@ process FASTQC_READS_RAW {
 
 	shell:
 	'''
-	/home/stefan/tools/FastQC/fastqc -t !{num_threads} --noextract !{reads}
+	fastqc -t !{num_threads} --noextract !{reads}
 	'''
 }
 
@@ -134,7 +135,7 @@ process FASTQC_READS_PREPRO {
 
 	shell:
 	'''
-	/home/stefan/tools/FastQC/fastqc -t !{num_threads} --noextract !{reads_prepro}
+	fastqc -t !{num_threads} --noextract !{reads_prepro}
 	'''
 }
 
@@ -175,7 +176,7 @@ process CREATE_KALLISTO_QC_TABLE {
 
 	shell:
 	'''
-		create_kallisto_qc_table.R
+	create_kallisto_qc_table.R
 	'''
 }
 
@@ -198,11 +199,13 @@ process CREATE_GENE_MATRIX {
 
 	shell:
 	'''
-		create_kallisto_gene_matrix.R !{kallisto_qc_table} !{removal_info} !{trans_oneline_unique} !{t2g_list} 
+	create_kallisto_gene_matrix.R !{kallisto_qc_table} !{removal_info} !{trans_oneline_unique} !{t2g_list} 
 	'''
 }
 
 
+
+// lot of workarounds to make rmarkdown work
 process CREATE_GENE_COUNT_PLOTS { 
 	publishDir "$params.data_dir/quality_reports", mode: "copy"
 
@@ -212,19 +215,20 @@ process CREATE_GENE_COUNT_PLOTS {
 		path gene_matrix_vst
 		
 	output:
-		//path "gene_count_analysis_plots.html"
-		path "*"
-
+		path "gene_count_analysis_plots.html"
+	
 	shell:
 	'''
-		create_gene_count_plots.R
+	#!/usr/bin/env Rscript
+
+	curr_dir = getwd()
+
+	params_list = list(curr_dir = curr_dir, reads_qc_table_file='!{kallisto_qc_table}', gene_matrix_file='!{gene_matrix}',gene_matrix_file_vst='!{gene_matrix_vst}')
+
+	rmarkdown::render(file.path('!{params.bin_dir}', "create_gene_count_plots.R"), output_file=file.path(curr_dir,'gene_count_analysis_plots.html'), params= params_list )
+
 	'''
 }
-
-
-
-
-
 
 
 
