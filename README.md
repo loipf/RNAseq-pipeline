@@ -45,6 +45,7 @@ optional extendable with:
 
 
 by default, all output will be saved into the `data` folder of the current directory.
+best to run with a new clear folder structure as not all new results do overwrite old ones.
 
 
 

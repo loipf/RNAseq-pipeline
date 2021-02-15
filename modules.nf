@@ -24,7 +24,7 @@ process CREATE_KALLISTO_INDEX {
 
 	### combine coding and uncoding transcripts
 	#cat Homo_sapiens.GRCh38.cdna.all.fa Homo_sapiens.GRCh38.ncrna.fa > Homo_sapiens.GRCh38.cdna_ncrna.fa
-	head -100 Homo_sapiens.GRCh38.ncrna.fa > Homo_sapiens.GRCh38.cdna_ncrna.fa   ## TODO UNCHANGE
+	head -500 Homo_sapiens.GRCh38.ncrna.fa > Homo_sapiens.GRCh38.cdna_ncrna.fa   ## TODO UNCHANGE
 	gzip -v Homo_sapiens.GRCh38.cdna_ncrna.fa
 
 	kallisto index -k 31 -i kallisto_transcripts.idx Homo_sapiens.GRCh38.cdna_ncrna.fa.gz
@@ -66,13 +66,12 @@ process RM_DUPLICATE_TRANSCRIPTS {
 
 	shell:
 	'''
-
 	gunzip -c !{raw_transcripts} | cut -f1 -d" " | awk '/^>/ {printf("\\n%s\\n",$0);next; } { printf("%s",$0);} END {printf("\\n");}' | tail -n +2 | sed 'N;s/\\n/ /' > Homo_sapiens.GRCh38.cdna_ncrna_oneline.txt
-
-	Rscript /home/stefan/Documents/umcg/RNAseq-pipeline/scripts/remove_duplicate_transcripts.R Homo_sapiens.GRCh38.cdna_ncrna_oneline.txt
-
+	
+	Rscript remove_duplicate_transcripts.R Homo_sapiens.GRCh38.cdna_ncrna_oneline.txt
 	'''
 }
+
 
 
 
@@ -175,16 +174,12 @@ process CREATE_KALLISTO_QC_TABLE {
 		path "kallisto_aligned_reads_qc.csv", emit: kallisto_qc_table
 
 	shell:
-	'''
-
-	Rscript /home/stefan/Documents/umcg/RNAseq-pipeline/scripts/create_kallisto_qc_table.R
-
-	'''
+		Rscript create_kallisto_qc_table.R
 }
 
 
 process CREATE_GENE_MATRIX { 
-	publishDir "$params.data_dir", mode: "copy"
+	publishDir "$params.data_dir", mode: "copy", saveAs: { filename -> filename.endsWith(".rds") ? "reads_quant/$filename" : filename }
 
 	input:
 		path kallisto_qc_table
@@ -194,54 +189,36 @@ process CREATE_GENE_MATRIX {
 		path kallisto_abundance
 		
 	output:
-		path "kallisto_gene_counts.csv"
-		path "kallisto_gene_counts_norm_sf_vst.csv"
-		path "kallisto_aligned_reads_qc.csv"
+		path "kallisto_gene_counts.csv", emit: gene_matrix
+		path "kallisto_gene_counts_norm_sf_vst.csv", emit: gene_matrix_vst
+		path "kallisto_aligned_reads_qc.csv", emit: kallisto_qc_table
+		path "all_kallisto_abundance_obj.rds"
 
 	shell:
-	'''
-
-	Rscript /home/stefan/Documents/umcg/RNAseq-pipeline/scripts/create_kallisto_gene_matrix.R !{kallisto_qc_table} !{removal_info} !{trans_oneline_unique} !{t2g_list}
-
-	'''
+		Rscript create_kallisto_gene_matrix.R 
 }
 
 
 
-
-
-
-
-
-
-process DEEPTOOLS_ANALYSIS { 
-	publishDir "$params.data_dir/reads_mapped/_deepTools", mode: 'copy'
+process CREATE_GENE_COUNT_PLOTS { 
+	publishDir "$params.data_dir/quality_reports", mode: "copy"
 
 	input:
-		path reads_mapped
-		path reads_mapped_index
-		val num_threads
-
+		path kallisto_qc_table
+		path gene_matrix
+		path gene_matrix_vst
+		
 	output:
-		path "*", emit:all
-
+		//path "gene_count_analysis_plots.html"
+		path "*"
 
 	shell:
 	'''
-	multiBamSummary bins -p !{num_threads} --smartLabels --bamfiles !{reads_mapped} -o multiBamSummary.npz
-
-	plotCorrelation --corData multiBamSummary.npz --corMethod spearman --whatToPlot heatmap --outFileCorMatrix plotCorrelation_matrix.tsv
-
-	plotPCA --corData multiBamSummary.npz --outFileNameData plotPCA_matrix.tsv
-
-	plotCoverage -p !{num_threads} --ignoreDuplicates --smartLabels --bamfiles !{reads_mapped} --outRawCounts plotCoverage_rawCounts_woDuplicates.tsv > plotCoverage_output.tsv
-
-	bamPEFragmentSize -p !{num_threads} --smartLabels --bamfiles !{reads_mapped} --table bamPEFragment_table.tsv --outRawFragmentLengths bamPEFragment_rawLength.tsv
-
-	estimateReadFiltering -p !{num_threads} --smartLabels --bamfiles !{reads_mapped} > estimateReadFiltering_output.tsv
-
+		Rscript -e "rmarkdown::render('create_gene_count_plots.R', output_file='gene_count_analysis_plots.html')" 
 	'''
 }
+
+
 
 
 

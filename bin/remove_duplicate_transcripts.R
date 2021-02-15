@@ -2,13 +2,12 @@
 ############################################
 ### remove transcripts with 100% sequence identiy
 
-# setwd("/home/stefan/Documents/umcg/RNAseq-pipeline/data/kallisto_index")
-
 library(data.table)
 
 args = commandArgs(trailingOnly=TRUE)
-
 oneline_filepath = args[1]
+# oneline_filepath = "Homo_sapiens.GRCh38.cdna_ncrna_oneline.txt"
+
 
 ############################################
 ### read in
@@ -27,12 +26,10 @@ fwrite(trans_table_short[,1,drop=F], "Homo_sapiens.GRCh38.cdna_ncrna_oneline_uni
 
 ### write numbers to output
 sink('kallisto_removal_info.txt')
-
 cat("### remove 100% sequence identity transcripts to avoid gene mapping bias\n")
 cat("number of unique identical transcripts found: ",num_identical_transcripts,"\n")
 cat("transcripts before: ",nrow(trans_table),"\n")
 cat("transcripts after removal: ", nrow(trans_table_short),"\n")
-
 sink()
 
 

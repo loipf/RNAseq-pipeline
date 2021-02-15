@@ -25,3 +25,14 @@ RUN conda install \
 ## perl 
 
 
+ apt-get -y install r-base
+		
+#
+# Install Sleuth 
+# https://liorpachter.wordpress.com/2015/08/17/a-sleuth-for-rna-seq/
+#
+RUN R -e 'source("http://bioconductor.org/biocLite.R"); library(BiocInstaller); biocLite(c("XML","biomaRt")); biocLite("rhdf5"); install.packages("devtools", repos="http://cloud.r-project.org/"); devtools::install_github("pachterlab/sleuth")'
+
+
+
+
