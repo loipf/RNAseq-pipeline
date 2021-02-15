@@ -68,7 +68,7 @@ process RM_DUPLICATE_TRANSCRIPTS {
 	'''
 	gunzip -c !{raw_transcripts} | cut -f1 -d" " | awk '/^>/ {printf("\\n%s\\n",$0);next; } { printf("%s",$0);} END {printf("\\n");}' | tail -n +2 | sed 'N;s/\\n/ /' > Homo_sapiens.GRCh38.cdna_ncrna_oneline.txt
 	
-	Rscript remove_duplicate_transcripts.R Homo_sapiens.GRCh38.cdna_ncrna_oneline.txt
+	remove_duplicate_transcripts.R Homo_sapiens.GRCh38.cdna_ncrna_oneline.txt
 	'''
 }
 
@@ -174,7 +174,9 @@ process CREATE_KALLISTO_QC_TABLE {
 		path "kallisto_aligned_reads_qc.csv", emit: kallisto_qc_table
 
 	shell:
-		Rscript create_kallisto_qc_table.R
+	'''
+		create_kallisto_qc_table.R
+	'''
 }
 
 
@@ -195,9 +197,10 @@ process CREATE_GENE_MATRIX {
 		path "all_kallisto_abundance_obj.rds"
 
 	shell:
-		Rscript create_kallisto_gene_matrix.R 
+	'''
+		create_kallisto_gene_matrix.R !{kallisto_qc_table} !{removal_info} !{trans_oneline_unique} !{t2g_list} 
+	'''
 }
-
 
 
 process CREATE_GENE_COUNT_PLOTS { 
@@ -214,7 +217,7 @@ process CREATE_GENE_COUNT_PLOTS {
 
 	shell:
 	'''
-		Rscript -e "rmarkdown::render('create_gene_count_plots.R', output_file='gene_count_analysis_plots.html')" 
+		create_gene_count_plots.R
 	'''
 }
 

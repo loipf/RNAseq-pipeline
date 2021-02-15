@@ -5,16 +5,19 @@
 
 pacman::p_load(data.table, tximport, DESeq2, rhdf5, dplyr, tidyr)
 
-READS_QC_TABLE_FILE = "kallisto_aligned_reads_qc.csv"
-PROCESSING_INFO_FILE = "kallisto_removal_info.txt"
-UNIQUE_TRANS_FILE = "Homo_sapiens.GRCh38.cdna_ncrna_oneline_unique.txt"
-TRANS2GENE_FILE = "transcript_to_gene_list.csv"
+args = commandArgs(trailingOnly=TRUE)
+READS_QC_TABLE_FILE = args[1]
+PROCESSING_INFO_FILE = args[2]
+UNIQUE_TRANS_FILE = args[3]
+TRANS2GENE_FILE = args[4]
+
+# READS_QC_TABLE_FILE = "kallisto_aligned_reads_qc.csv"
+# PROCESSING_INFO_FILE = "kallisto_removal_info.txt"
+# UNIQUE_TRANS_FILE = "Homo_sapiens.GRCh38.cdna_ncrna_oneline_unique.txt"
+# TRANS2GENE_FILE = "transcript_to_gene_list.csv"
+
 KALLISTO_FILES = list.files(path=".", pattern="*.h5", full.names=T)
 
-# KALLISTO_FILES = list.files(path="/home/stefan/Documents/umcg/RNAseq-pipeline/data/reads_quant", pattern="*.h5", recursive = T, full.names = T)
-# READS_QC_TABLE_FILE = "/home/stefan/Documents/umcg/RNAseq-pipeline/data/kallisto_aligned_reads_qc.csv"
-# UNIQUE_TRANS_FILE = "/home/stefan/Documents/umcg/RNAseq-pipeline/data/kallisto_index/Homo_sapiens.GRCh38.cdna_ncrna_oneline_unique.txt"
-# TRANS2GENE_FILE = '/home/stefan/Documents/umcg/RNAseq-pipeline/data/transcript_to_gene_list.csv'
 
 ############################################
 ### read in all necessary tables
@@ -27,12 +30,10 @@ colnames(unique_trans_table) = "transcript_id"
 
 reads_qc_table =  data.frame(fread(READS_QC_TABLE_FILE, header = T), stringsAsFactors = FALSE, row.names = 1)
 
-
 ############################################
 ### read in all kallisto files and create gene counts
 
 processed_samples = sapply(KALLISTO_FILES, function(file_name) { strsplit(basename(file_name),"_")[[1]][1] } )
-
 kallisto_abundance_obj <- tximport(KALLISTO_FILES, type = "kallisto", txOut = TRUE,  importer = tximport:::read_kallisto_h5)
 
 ### add sample names to colnames
@@ -119,6 +120,7 @@ sf_df = data.frame(sizeFactors(dds))
 colnames(sf_df) = c("DESeq2_size_factor")
 reads_qc_table[["DESeq2_size_factor"]] <- NULL   ### fixes double read in bug with nextflow
 reads_qc_table_merged = merge_rownames_df(reads_qc_table, sf_df)
+reads_qc_table_merged[["sample_id"]] = rownames(reads_qc_table_merged)
 fwrite(reads_qc_table_merged, "kallisto_aligned_reads_qc.csv", quote=F, row.names=T)
 
 

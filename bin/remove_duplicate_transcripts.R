@@ -1,3 +1,4 @@
+#!/usr/bin/env Rscript
 
 ############################################
 ### remove transcripts with 100% sequence identiy
