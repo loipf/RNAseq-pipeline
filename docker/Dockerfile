@@ -1,11 +1,10 @@
-FROM conda/miniconda3@sha256:2141bfc4b60cc5eb332402207c80d884daa72fcefa48b50f3ccadd934d1f3d03
+FROM continuumio/miniconda3@sha256:7838d0ce65783b0d944c19d193e2e6232196bada9e5f3762dc7a9f07dc271179
 
 MAINTAINER loipf
 
-#RUN apt-get update 
-#RUN conda update --all
+RUN conda update --all
 
-RUN apt-get update && apt install -y procps gzip curl
+RUN apt-get update && apt install -y procps gzip curl chrpath
 
 RUN conda config --add channels defaults
 RUN conda config --add channels bioconda
@@ -17,10 +16,11 @@ RUN conda install \
 		multiqc==1.9 \
 		fastqc==0.11.9-0 \
 		cutadapt==2.10 \
-		kallisto==0.46.2 \
-		r-base==3.6.3
+		kallisto==0.46.2
 
+RUN apt install -y r-base
+RUN apt install -y build-essential aptitude libxml2-dev libssl-dev libcurl4-openssl-dev libxtst6 libgl1-mesa-glx
 
-RUN R -e 'install.packages("pacman",repos = "http://cran.us.r-project.org"); pacman::p_load(knitr, data.table, plotly, ggplot2, pheatmap, vsn, hexbin, LSD, cowplot, rmarkdown, tximport, DESeq2, rhdf5, dplyr, tidyr, rjson)'
-
+RUN R -e 'install.packages("pacman",repos = "http://cran.us.r-project.org")'
+RUN R -e 'pacman::p_load(BiocManager, knitr, data.table, plotly, ggplot2, pheatmap, hexbin, LSD, cowplot, rmarkdown, dplyr, tidyr, tximport,rhdf5, vsn, rjson)'
 

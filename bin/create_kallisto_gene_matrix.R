@@ -11,6 +11,11 @@ PROCESSING_INFO_FILE = args[2]
 UNIQUE_TRANS_FILE = args[3]
 TRANS2GENE_FILE = args[4]
 
+
+setwd("/home/stefan/Documents/umcg/RNAseq-pipeline/data/")
+
+list.files(".")
+
 # READS_QC_TABLE_FILE = "kallisto_aligned_reads_qc.csv"
 # PROCESSING_INFO_FILE = "kallisto_removal_info.txt"
 # UNIQUE_TRANS_FILE = "Homo_sapiens.GRCh38.cdna_ncrna_oneline_unique.txt"
@@ -84,39 +89,88 @@ gene_matrix = gene_matrix[!duplicated(rownames(gene_matrix)),]
 gene_matrix = gene_matrix[order(rownames(gene_matrix), decreasing = F),]  ### sort increasing again
 cat("gene count matrix without duplicated gene names: ", dim(gene_matrix),"\n")
 
+cat("\n\n### Rsession info\n")
+sessionInfo()   ### to output r-package versions
 sink()
 
   
 ### output gene count matrix
-fwrite(data.frame(gene_matrix), "kallisto_gene_counts.csv", quote=F, row.names=T) 
+fwrite(data.frame(gene_matrix), "kallisto_gene_counts.csv", quote=F, row.names=T)  # genes x samples 
 
 
 ############################################
-### DESeq2 normalization
-dummy_colData = data.frame(rep(1, ncol(gene_matrix)), row.names=colnames(gene_matrix))
-dds = DESeqDataSetFromMatrix(round(gene_matrix), dummy_colData, design = ~1)  # no covariates included
-dds <- estimateSizeFactors(dds)
-dds <- estimateDispersions(dds)
+### DESeq2 normalization - problem with package installation in docker
+# dummy_colData = data.frame(rep(1, ncol(gene_matrix)), row.names=colnames(gene_matrix))
+# dds = DESeqDataSetFromMatrix(round(gene_matrix), dummy_colData, design = ~1)  # no covariates included
+# dds <- estimateSizeFactors(dds)
+# dds <- estimateDispersions(dds)
 
 # ### size factor normalized output
 # gene_matrix_norm = counts(dds, normalized=T)
 # fwrite(data.frame(gene_matrix_norm), "kallisto_gene_counts_norm_sf.csv", quote=F, row.names=T) 
 
-
-### vst or log transformation ?
+### vst or log transformation ? not necessary - should filter first ?
 ### https://seqqc.wordpress.com/2015/02/16/should-you-transform-rna-seq-data-log-vst-voom/
-gene_matrix_vst = assay(varianceStabilizingTransformation(dds))
-fwrite(data.frame(gene_matrix_vst), "kallisto_gene_counts_norm_sf_vst.csv", quote=F, row.names=T)
+# gene_matrix_vst = assay(varianceStabilizingTransformation(dds))
+# fwrite(data.frame(gene_matrix_vst), "kallisto_gene_counts_norm_sf_vst.csv", quote=F, row.names=T)
 
 
 
+
+
+### only output estimated size factors to see filtering
+### equals DESeq2::estimateSizeFactorsForMatrix but problem install package on docker
+estimateSizeFactorsForMatrix <- function (counts, locfunc = stats::median, geoMeans, controlGenes) {
+  if (missing(geoMeans)) {
+    incomingGeoMeans <- FALSE
+    loggeomeans <- rowMeans(log(counts))
+  }
+  else {
+    incomingGeoMeans <- TRUE
+    if (length(geoMeans) != nrow(counts)) {
+      stop("geoMeans should be as long as the number of rows of counts")
+    }
+    loggeomeans <- log(geoMeans)
+  }
+  if (all(is.infinite(loggeomeans))) {
+    stop("every gene contains at least one zero, cannot compute log geometric means")
+  }
+  sf <- if (missing(controlGenes)) {
+    apply(counts, 2, function(cnts) {
+      exp(locfunc((log(cnts) - loggeomeans)[is.finite(loggeomeans) & 
+                                              cnts > 0]))
+    })
+  }
+  else {
+    if (!(is.numeric(controlGenes) | is.logical(controlGenes))) {
+      stop("controlGenes should be either a numeric or logical vector")
+    }
+    loggeomeansSub <- loggeomeans[controlGenes]
+    apply(counts[controlGenes, , drop = FALSE], 2, function(cnts) {
+      exp(locfunc((log(cnts) - loggeomeansSub)[is.finite(loggeomeansSub) & 
+                                                 cnts > 0]))
+    })
+  }
+  if (incomingGeoMeans) {
+    sf <- sf/exp(mean(log(sf)))
+  }
+  sf
+}
+
+
+# gene_matrix = gene_matrix[!rowSums(gene_matrix) > 10,]   ### low level genes
+size_factors = estimateSizeFactorsForMatrix(gene_matrix)
+
+
+############################################
 ### append size factors to kallisto read info
 merge_rownames_df <- function(df1, df2, ...) {
   merge_df = merge(df1, df2, by="row.names", ...)
   data.frame(merge_df, row.names = 1, check.names = F )
 }
 
-sf_df = data.frame(sizeFactors(dds))
+# sf_df = data.frame(sizeFactors(dds))
+sf_df = data.frame(size_factors)
 colnames(sf_df) = c("DESeq2_size_factor")
 reads_qc_table[["DESeq2_size_factor"]] <- NULL   ### fixes double read in bug with nextflow
 reads_qc_table_merged = merge_rownames_df(reads_qc_table, sf_df)

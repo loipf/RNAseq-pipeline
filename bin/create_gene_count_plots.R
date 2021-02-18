@@ -120,10 +120,12 @@ plot_heatscatter(gene_matrix_vst[,1], gene_matrix_vst[,2], main="gene count samp
 
 
 #' ### raw to vst heteroscedasticity
+non_zero_count_genes = names(!rowSums(gene_matrix)==0)
+
 #+ fig.width=10, fig.height=5
-p1 = meanSdPlot(as.matrix(gene_matrix), plot=F)$gg + ggtitle("raw") + theme_bw()
-p2 = meanSdPlot(as.matrix(gene_matrix_log2), plot=F)$gg + ggtitle("log2 normalized") + theme_bw()
-p3 = meanSdPlot(as.matrix(gene_matrix_vst), plot=F)$gg + ggtitle("sf+vst normalized") + theme_bw()
+p1 = meanSdPlot(as.matrix(gene_matrix[non_zero_count_genes,]), plot=F)$gg + ggtitle("raw") + theme_bw()
+p2 = meanSdPlot(as.matrix(gene_matrix_log2[non_zero_count_genes,]), plot=F)$gg + ggtitle("log2 normalized") + theme_bw()
+p3 = meanSdPlot(as.matrix(gene_matrix_vst[non_zero_count_genes,]), plot=F)$gg + ggtitle("sf+vst normalized") + theme_bw()
 p_grid = plot_grid(p1,p2,p3, labels="AUTO", ncol=3)
 title <- ggdraw() + draw_label("gene counts mean-sd", fontface='bold')
 plot_grid(title, p_grid, ncol=1, rel_heights=c(0.1, 1))

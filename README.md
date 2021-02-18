@@ -7,18 +7,18 @@ a RNAseq quantification pipeline from `.fasta` files to a gene counts matrix usi
 ### set up pipeline
 
 
-before running, you have to set up the attached Docker image:
+before running, you have to set up the attached Docker image (will take ~30 min):
 ```sh
 docker build -t rnaseq-pipeline https://raw.githubusercontent.com/loipf/RNAseq-pipeline/master/docker/Dockerfile
 ```
 
-now either replace the Docker container hash (last output line from previous build command) in `nextflow.config` or run nextflow with the `-with-docker dnavc-pipeline` argument.
+now either replace the Docker container hash (last output line from previous build command) in `nextflow.config` or run nextflow with the `-with-docker rnaseq-pipeline` argument.
 
 
 ---
 ### run quantification pipeline
 
-no preprocessing or quality fitering is performed and need to be done by the user! (check file `kallisto_aligned_reads_qc.csv` for `p_pseudoaligned` >70% and `DESeq2_size_factor` around 0.7-1.3)
+no preprocessing or quality fitering is performed and need to be done by the user! (check file `kallisto_aligned_reads_qc.csv` for `p_pseudoaligned` >70% and `DESeq2_size_factor` around 0.7-1.3, maybe keep only genes on main chromosoms)
 
 it can be run locally with downloaded github-repo and edited `nextflow.config` file with:
 ```sh
