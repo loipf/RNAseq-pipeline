@@ -41,6 +41,11 @@ optional extendable with:
 -w work_dir
 ```
 
+for newer nextflow version you may have to specify the used version, like:
+```sh
+nextflow run loipf/RNAseq-pipeline -r main ...
+```
+
 
 by default, all output will be saved into the `data` folder of the current directory.
 best to run with a new clear folder structure as not all new results do overwrite old ones.
