@@ -24,8 +24,7 @@ process CREATE_KALLISTO_INDEX {
 	gunzip Homo_sapiens.GRCh38.ncrna.fa.gz
 
 	### combine coding and uncoding transcripts
-	#cat Homo_sapiens.GRCh38.cdna.all.fa Homo_sapiens.GRCh38.ncrna.fa > Homo_sapiens.GRCh38.cdna_ncrna.fa
-	head -500 Homo_sapiens.GRCh38.ncrna.fa > Homo_sapiens.GRCh38.cdna_ncrna.fa   ### TODO only small test set
+	cat Homo_sapiens.GRCh38.cdna.all.fa Homo_sapiens.GRCh38.ncrna.fa > Homo_sapiens.GRCh38.cdna_ncrna.fa
 	gzip -v Homo_sapiens.GRCh38.cdna_ncrna.fa
 
 	kallisto index -k 31 -i kallisto_transcripts.idx Homo_sapiens.GRCh38.cdna_ncrna.fa.gz

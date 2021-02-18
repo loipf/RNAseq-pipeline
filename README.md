@@ -1,6 +1,6 @@
 # RNAseq pipeline
 
-a RNAseq quantification pipeline from `.fasta` files to a gene counts matrix using kallisto.
+a RNAseq quantification pipeline from `.fasta` files to a gene counts matrix using kallisto for coding and non-coding RNA.
 
 
 ---
