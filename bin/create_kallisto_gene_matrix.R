@@ -3,18 +3,13 @@
 ############################################
 ### formats single kallisto entries to count matrix
 
-pacman::p_load(data.table, tximport, DESeq2, rhdf5, dplyr, tidyr)
+pacman::p_load(data.table, tximport, rhdf5, dplyr, tidyr)
 
 args = commandArgs(trailingOnly=TRUE)
 READS_QC_TABLE_FILE = args[1]
 PROCESSING_INFO_FILE = args[2]
 UNIQUE_TRANS_FILE = args[3]
 TRANS2GENE_FILE = args[4]
-
-
-setwd("/home/stefan/Documents/umcg/RNAseq-pipeline/data/")
-
-list.files(".")
 
 # READS_QC_TABLE_FILE = "kallisto_aligned_reads_qc.csv"
 # PROCESSING_INFO_FILE = "kallisto_removal_info.txt"
