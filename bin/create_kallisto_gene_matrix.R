@@ -95,67 +95,68 @@ fwrite(data.frame(gene_matrix), "kallisto_gene_counts.csv", quote=F, row.names=T
 
 ############################################
 ### DESeq2 normalization - problem with package installation in docker
-# dummy_colData = data.frame(rep(1, ncol(gene_matrix)), row.names=colnames(gene_matrix))
-# dds = DESeqDataSetFromMatrix(round(gene_matrix), dummy_colData, design = ~1)  # no covariates included
-# dds <- estimateSizeFactors(dds)
-# dds <- estimateDispersions(dds)
+dummy_colData = data.frame(rep(1, ncol(gene_matrix)), row.names=colnames(gene_matrix))
+dds = DESeqDataSetFromMatrix(round(gene_matrix), dummy_colData, design = ~1)  # no covariates included
+dds <- estimateSizeFactors(dds)
+dds <- estimateDispersions(dds)
 
 # ### size factor normalized output
 # gene_matrix_norm = counts(dds, normalized=T)
-# fwrite(data.frame(gene_matrix_norm), "kallisto_gene_counts_norm_sf.csv", quote=F, row.names=T) 
+# fwrite(data.frame(gene_matrix_norm), "kallisto_gene_counts_norm_sf.csv", quote=F, row.names=T)
 
 ### vst or log transformation ? not necessary - should filter first ?
 ### https://seqqc.wordpress.com/2015/02/16/should-you-transform-rna-seq-data-log-vst-voom/
-# gene_matrix_vst = assay(varianceStabilizingTransformation(dds))
-# fwrite(data.frame(gene_matrix_vst), "kallisto_gene_counts_norm_sf_vst.csv", quote=F, row.names=T)
+gene_matrix_vst = assay(varianceStabilizingTransformation(dds))
+fwrite(data.frame(gene_matrix_vst), "kallisto_gene_counts_norm_sf_vst.csv", quote=F, row.names=T)
 
 
 
 
-
-### only output estimated size factors to see filtering
-### equals DESeq2::estimateSizeFactorsForMatrix but problem install package on docker
-estimateSizeFactorsForMatrix <- function (counts, locfunc = stats::median, geoMeans, controlGenes) {
-  if (missing(geoMeans)) {
-    incomingGeoMeans <- FALSE
-    loggeomeans <- rowMeans(log(counts))
-  }
-  else {
-    incomingGeoMeans <- TRUE
-    if (length(geoMeans) != nrow(counts)) {
-      stop("geoMeans should be as long as the number of rows of counts")
-    }
-    loggeomeans <- log(geoMeans)
-  }
-  if (all(is.infinite(loggeomeans))) {
-    stop("every gene contains at least one zero, cannot compute log geometric means")
-  }
-  sf <- if (missing(controlGenes)) {
-    apply(counts, 2, function(cnts) {
-      exp(locfunc((log(cnts) - loggeomeans)[is.finite(loggeomeans) & 
-                                              cnts > 0]))
-    })
-  }
-  else {
-    if (!(is.numeric(controlGenes) | is.logical(controlGenes))) {
-      stop("controlGenes should be either a numeric or logical vector")
-    }
-    loggeomeansSub <- loggeomeans[controlGenes]
-    apply(counts[controlGenes, , drop = FALSE], 2, function(cnts) {
-      exp(locfunc((log(cnts) - loggeomeansSub)[is.finite(loggeomeansSub) & 
-                                                 cnts > 0]))
-    })
-  }
-  if (incomingGeoMeans) {
-    sf <- sf/exp(mean(log(sf)))
-  }
-  sf
-}
-
-
-# gene_matrix = gene_matrix[!rowSums(gene_matrix) > 10,]   ### low level genes
-size_factors = estimateSizeFactorsForMatrix(gene_matrix)
-
+# 
+# ### only output estimated size factors to see filtering
+# ### equals DESeq2::estimateSizeFactorsForMatrix but problem install package on docker
+# estimateSizeFactorsForMatrix <- function (counts, locfunc = stats::median, geoMeans, controlGenes) {
+#   if (missing(geoMeans)) {
+#     incomingGeoMeans <- FALSE
+#     loggeomeans <- rowMeans(log(counts))
+#   }
+#   else {
+#     incomingGeoMeans <- TRUE
+#     if (length(geoMeans) != nrow(counts)) {
+#       stop("geoMeans should be as long as the number of rows of counts")
+#     }
+#     loggeomeans <- log(geoMeans)
+#   }
+#   if (all(is.infinite(loggeomeans))) {
+#     stop("every gene contains at least one zero, cannot compute log geometric means")
+#   }
+#   sf <- if (missing(controlGenes)) {
+#     apply(counts, 2, function(cnts) {
+#       exp(locfunc((log(cnts) - loggeomeans)[is.finite(loggeomeans) & 
+#                                               cnts > 0]))
+#     })
+#   }
+#   else {
+#     if (!(is.numeric(controlGenes) | is.logical(controlGenes))) {
+#       stop("controlGenes should be either a numeric or logical vector")
+#     }
+#     loggeomeansSub <- loggeomeans[controlGenes]
+#     apply(counts[controlGenes, , drop = FALSE], 2, function(cnts) {
+#       exp(locfunc((log(cnts) - loggeomeansSub)[is.finite(loggeomeansSub) & 
+#                                                  cnts > 0]))
+#     })
+#   }
+#   if (incomingGeoMeans) {
+#     sf <- sf/exp(mean(log(sf)))
+#   }
+#   sf
+# }
+# 
+# 
+# # gene_matrix = gene_matrix[!rowSums(gene_matrix) > 10,]   ### low level genes
+# size_factors = estimateSizeFactorsForMatrix(gene_matrix)
+# sf_df = data.frame(size_factors)
+# 
 
 ############################################
 ### append size factors to kallisto read info
@@ -164,8 +165,7 @@ merge_rownames_df <- function(df1, df2, ...) {
   data.frame(merge_df, row.names = 1, check.names = F )
 }
 
-# sf_df = data.frame(sizeFactors(dds))
-sf_df = data.frame(size_factors)
+sf_df = data.frame(sizeFactors(dds))
 colnames(sf_df) = c("DESeq2_size_factor")
 reads_qc_table[["DESeq2_size_factor"]] <- NULL   ### fixes double read in bug with nextflow
 reads_qc_table_merged = merge_rownames_df(reads_qc_table, sf_df)

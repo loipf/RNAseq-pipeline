@@ -28,6 +28,8 @@ gene_matrix =  data.frame(fread(GENE_MATRIX_FILE, header = T), stringsAsFactors 
 gene_matrix_vst =  data.frame(fread(GENE_MATRIX_FILE_VST, header = T), stringsAsFactors = FALSE, row.names = 1)
 gene_matrix_log2 = log2(gene_matrix+1)  ### vst has sf norm, log2 not
 
+get vst matrix working, add to params at the start
+
 
 ############################################
 ### functions

@@ -192,7 +192,7 @@ process CREATE_GENE_MATRIX {
 		
 	output:
 		path "kallisto_gene_counts.csv", emit: gene_matrix
-//		path "kallisto_gene_counts_norm_sf_vst.csv", emit: gene_matrix_vst
+		path "kallisto_gene_counts_norm_sf_vst.csv", emit: gene_matrix_vst
 		path "kallisto_aligned_reads_qc.csv", emit: kallisto_qc_table
 		path "all_kallisto_abundance_obj.rds"
 
@@ -223,6 +223,8 @@ process CREATE_GENE_COUNT_PLOTS {
 	curr_dir = getwd()
 
 	params_list = list(curr_dir = curr_dir, reads_qc_table_file='!{kallisto_qc_table}', gene_matrix_file='!{gene_matrix}',gene_matrix_file_vst='!{gene_matrix_vst}')
+
+	#params_list = list(curr_dir = curr_dir, reads_qc_table_file='!{kallisto_qc_table}', gene_matrix_file='!{gene_matrix}')
 
 	rmarkdown::render(file.path('!{params.bin_dir}', "create_gene_count_plots.R"), output_file=file.path(curr_dir,'gene_count_analysis_plots.html'), params= params_list )
 
