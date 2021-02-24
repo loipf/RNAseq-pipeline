@@ -1,8 +1,6 @@
 
-
 // need params.data_dir declared in main.nf, not implemented in DSL2 yet
 params.data_dir	= "$launchDir/data"
-params.bin_dir	= "$launchDir/bin"
 
 
 process CREATE_KALLISTO_INDEX { 
@@ -204,7 +202,7 @@ process CREATE_GENE_MATRIX {
 
 
 
-// lot of workarounds to make rmarkdown work
+
 process CREATE_GENE_COUNT_PLOTS { 
 	publishDir "$params.data_dir/quality_reports", mode: "copy"
 
@@ -221,15 +219,16 @@ process CREATE_GENE_COUNT_PLOTS {
 	#!/usr/bin/env Rscript
 
 	curr_dir = getwd()
-
+	rmarkdown_file_path = system("which create_gene_count_plots.R", intern = TRUE)
+	
 	params_list = list(curr_dir = curr_dir, reads_qc_table_file='!{kallisto_qc_table}', gene_matrix_file='!{gene_matrix}',gene_matrix_file_vst='!{gene_matrix_vst}')
 
-	#params_list = list(curr_dir = curr_dir, reads_qc_table_file='!{kallisto_qc_table}', gene_matrix_file='!{gene_matrix}')
-
-	rmarkdown::render(file.path('!{params.bin_dir}', "create_gene_count_plots.R"), output_file=file.path(curr_dir,'gene_count_analysis_plots.html'), params= params_list )
+	rmarkdown::render(rmarkdown_file_path, output_file=file.path(curr_dir,'gene_count_analysis_plots.html'), params= params_list )
 
 	'''
 }
+
+
 
 
 

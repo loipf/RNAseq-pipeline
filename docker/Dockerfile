@@ -1,4 +1,3 @@
-#FROM conda/miniconda3@sha256:2141bfc4b60cc5eb332402207c80d884daa72fcefa48b50f3ccadd934d1f3d03
 FROM continuumio/miniconda3@sha256:7838d0ce65783b0d944c19d193e2e6232196bada9e5f3762dc7a9f07dc271179
 
 MAINTAINER loipf
@@ -23,24 +22,13 @@ RUN conda install \
 RUN conda install r-base==3.6.3 r-essentials
 RUN conda install libiconv mesa-libgl-cos6-x86_64 libxml2 xorg-libxtst
 
-#RUN conda install bioconductor-deseq2 r-xml 
-
+### pacakges with special library dependencies 
 RUN conda install -c conda-forge r-xml
 RUN conda install -c bioconda bioconductor-deseq2
-
-#RUN conda install -c bioconda bioconductor-rhdf5
-
-
-#RUN R -e 'install.packages("RCurl",repos = "http://cran.us.r-project.org")'
-#RUN R -e 'pacman::p_load(BiocManager,foreign)'
-#RUN R -e 'pacman::p_load(BiocManager,RCurl)'
-#RUN R -e 'pacman::p_load(BiocManager,XML)'
-#RUN R -e 'pacman::p_load(BiocManager,annotate)'
-#RUN R -e 'pacman::p_load(BiocManager,DESeq2)'
+RUN conda install -c bioconda bioconductor-rhdf5
 
 RUN R -e 'install.packages("pacman",repos = "http://cran.us.r-project.org")'
-RUN R -e 'pacman::p_load(BiocManager, knitr, data.table, plotly, ggplot2, pheatmap, hexbin, LSD, cowplot, rmarkdown, dplyr, tidyr, tximport,rhdf5, vsn, rjson, GenomeInfoDbData)'
-
+RUN R -e 'pacman::p_load(BiocManager, knitr, data.table, plotly, ggplot2, pheatmap, hexbin, LSD, cowplot, rmarkdown, dplyr, tidyr, tximport, vsn, rjson, GenomeInfoDbData)'
 
 
 
