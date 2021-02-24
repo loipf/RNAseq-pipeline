@@ -28,6 +28,8 @@ RUN conda install libiconv mesa-libgl-cos6-x86_64 libxml2 xorg-libxtst
 RUN conda install -c conda-forge r-xml
 RUN conda install -c bioconda bioconductor-deseq2
 
+#RUN conda install -c bioconda bioconductor-rhdf5
+
 
 #RUN R -e 'install.packages("RCurl",repos = "http://cran.us.r-project.org")'
 #RUN R -e 'pacman::p_load(BiocManager,foreign)'

@@ -18,7 +18,7 @@ now either replace the Docker container hash (last output line from previous bui
 ---
 ### run quantification pipeline
 
-no preprocessing or quality fitering is performed and need to be done by the user! (check file `kallisto_aligned_reads_qc.csv` for `p_pseudoaligned` >70% and `DESeq2_size_factor` around 0.7-1.3, maybe keep only genes on main chromosoms)
+no preprocessing or quality fitering is performed and need to be done by the user! (check file `kallisto_aligned_reads_qc.csv` for `p_pseudoaligned` >70% and `DESeq2_size_factor` around 0.6-1.4, maybe keep only genes on main chromosoms)
 
 it can be run locally with downloaded github-repo and edited `nextflow.config` file with:
 ```sh
@@ -28,7 +28,7 @@ nextflow run main.nf
 or
 
 ```sh
-nextflow run loipf/RNAseq-pipeline --project_dir /path/to/folder --reads_dir /path/to/samples --ensembl_release 101 --num_threads 10 -with-docker rnsaseq-pipeline
+nextflow run loipf/RNAseq-pipeline -r main --project_dir /path/to/folder --reads_dir /path/to/samples --ensembl_release 101 --num_threads 10 -with-docker rnsaseq-pipeline
 ```
 for this execution to work properly, you have to be in the current project directory.
 

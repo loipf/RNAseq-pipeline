@@ -3,7 +3,7 @@
 ############################################
 ### formats single kallisto entries to count matrix
 
-pacman::p_load(data.table, tximport, rhdf5, dplyr, tidyr)
+pacman::p_load(data.table, tximport, rhdf5, dplyr, tidyr, DESeq2)
 
 args = commandArgs(trailingOnly=TRUE)
 READS_QC_TABLE_FILE = args[1]
