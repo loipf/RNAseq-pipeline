@@ -77,6 +77,7 @@ process PREPROCESS_READS {
 	tag "$sample_id"
 	publishDir "$params.data_dir/reads_prepro", pattern:"*cutadapt_output.txt", mode: "copy", saveAs: { filename -> "${sample_id}/$filename" }
 	stageInMode = 'copy'   // avoids permission denied error
+	cache false
 
 	input:
 		tuple val(sample_id), path(reads) 
@@ -101,6 +102,7 @@ process FASTQC_READS_RAW {
 	tag "$sample_id"
 	publishDir "$params.data_dir/reads_raw", mode: "copy", overwrite: false, saveAs: { filename -> "${sample_id}/$filename" }
 	stageInMode = 'copy'   // avoids permission denied error
+	cache false
 
 	input:
 		tuple val(sample_id), path(reads) 
@@ -140,7 +142,7 @@ process FASTQC_READS_PREPRO {
 process QUANT_KALLISTO { 
 	tag "$sample_id"
 	publishDir "$params.data_dir/reads_quant", mode: 'copy', saveAs: { filename -> "${sample_id}/$filename" }
-
+	
 	input:
 		tuple val(sample_id), path(reads_prepro) 
 		val num_threads
