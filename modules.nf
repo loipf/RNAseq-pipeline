@@ -195,6 +195,7 @@ process CREATE_GENE_MATRIX {
 		path "kallisto_gene_counts_norm_sf_vst.csv", emit: gene_matrix_vst
 		path "kallisto_aligned_reads_qc.csv", emit: kallisto_qc_table
 		path "all_kallisto_abundance_obj.rds"
+		path "kallisto_removal_info.txt"
 
 	shell:
 	'''

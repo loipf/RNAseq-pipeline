@@ -46,7 +46,7 @@ plot_heatscatter <- function(x, y, ...) {
 }
 
 plot_density_genes <- function(gene_matrix, main="", xlab="values") {
-  plot_df = stack(gene_matrix)
+  plot_df = stack(gene_matrix[seq(1, nrow(gene_matrix), 10),])   ### subset to avoid overload
   colnames(plot_df)[2] = "sample_id"
   p <- ggplot(plot_df, aes(x=values)) + labs(x=xlab, title=main) +
     stat_density(aes(color=sample_id),position="identity",geom="line") +
@@ -55,6 +55,7 @@ plot_density_genes <- function(gene_matrix, main="", xlab="values") {
 }
 
 plot_density_genes_cumulative <- function(gene_matrix, main="", xlab="values") {
+  gene_matrix = gene_matrix[seq(1, nrow(gene_matrix), 10),]   ### subset to avoid overload
   plot_df_list = sapply(colnames(gene_matrix), function(sample_id) {
     x_value = sort(gene_matrix[,sample_id])
     cumul_value = cumsum(x_value)/sum(x_value)
@@ -95,7 +96,7 @@ ggplotly(p)
 COLOR_PALETTE <- c("#2166AC","#67A9CF","#D1E5F0","#F7F7F7","#FDDBC7","#EF8A62","#B2182B") ## rev(brewer.pal(n = 7, name = "RdBu"))
 gene_matrix_vst_center = center_rowwise(gene_matrix_vst)
 corr_matrix = cor(gene_matrix_vst_center)
-#+ fig.width=10, fig.height=8
+#+ fig.width=10, fig.height=9
 pheatmap(corr_matrix, main="sample correlation gene_counts",
          breaks = seq(-1,1, length.out = 100), na_col = "grey", color=colorRampPalette(COLOR_PALETTE)(100) )
 
@@ -155,6 +156,8 @@ ggplotly(plot_density_genes(gene_matrix_vst, main="gene count densities [sf+vst]
 #' ## gene count density plots cumulative
 ggplotly(plot_density_genes_cumulative(gene_matrix_log2, main="gene count densities [raw]", xlab="log2(expression+1)"))
 ggplotly(plot_density_genes_cumulative(gene_matrix_vst, main="gene count densities [sf+vst]", xlab="sf+vst expression"))
+
+
 
 
 
