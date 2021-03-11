@@ -55,6 +55,7 @@ saveRDS(kallisto_abundance_obj, file="all_kallisto_abundance_obj.rds")
 sink(PROCESSING_INFO_FILE)
 cat("\n\n### remove 100% sequence identity transcripts to avoid gene mapping bias\n")
 
+
 ### consider only unique transcripts to avoid double gene mapping bias
 merged_unique_trans_gene = merge(unique_trans_table, tr2g_matrix[,c("transcript_id","gene_id")])
 identical_transcripts_removed = setdiff(tr2g_matrix[["gene_id"]],merged_unique_trans_gene[["gene_id"]])
@@ -75,14 +76,24 @@ cat("gene count matrix with genes with same version removed: ", dim(gene_matrix)
 # gene_matrix = gene_matrix[rownames(gene_matrix) %in% unique(genes_on_chromosomes),]
 # cat("gene count matrix with only genes located on main chromosomes: ", dim(gene_matrix),"\n")
 
+
 ### sort genes to newest version first, remove .version and remove duplicated gene names while keeping newest
-gene_sorted_order = order(nchar(rownames(gene_matrix)), rownames(gene_matrix), decreasing = TRUE)   # to correctly handle .1 .2 .10
-gene_matrix = gene_matrix[gene_sorted_order,]   # keep newest
-gene_names_wo_version <- gsub('\\.[0-9]*$', "", rownames(gene_matrix))
-rownames(gene_matrix) = gene_names_wo_version
-gene_matrix = gene_matrix[!duplicated(rownames(gene_matrix)),]
+gene_version_df = data.frame(gene_matrix_id = rownames(gene_matrix), stringsAsFactors = F)
+gene_version_df = gene_version_df[order(nchar(gene_version_df$gene_matrix_id), gene_version_df$gene_matrix_id, decreasing = TRUE), ,drop=F]   # to correctly handle .1 .2 .10
+gene_version_df$gene_matrix_id_wo_version = gsub('\\.[0-9]*$', "", gene_version_df$gene_matrix_id)
+gene_version_df$is_duplicated = duplicated(gene_version_df$gene_matrix_id_wo_version)
+gene_version_df = gene_version_df[gene_version_df$is_duplicated==F,]  ### remove duplicates
+
+gene_matrix = gene_matrix[gene_version_df$gene_matrix_id,]
+rownames(gene_matrix) = gene_version_df$gene_matrix_id_wo_version
 gene_matrix = gene_matrix[order(rownames(gene_matrix), decreasing = F),]  ### sort increasing again
 cat("gene count matrix without duplicated gene names: ", dim(gene_matrix),"\n")
+
+tr2g_matrix_merge = merge(tr2g_matrix, gene_version_df[,c("gene_matrix_id","gene_matrix_id_wo_version")], by.x="gene_id", by.y="gene_matrix_id", all.x=T)
+colnames(tr2g_matrix_merge)[grepl("gene_matrix_id_wo_version",colnames(tr2g_matrix_merge))] = "gene_count_matrix_id"
+fwrite(data.frame(tr2g_matrix_merge), "transcript_to_gene_list.csv", quote=F, row.names=F)
+
+
 
 cat("\n\n### Rsession info\n")
 sessionInfo()   ### to output r-package versions

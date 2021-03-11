@@ -32,8 +32,6 @@ process CREATE_KALLISTO_INDEX {
 
 
 process CREATE_T2G_LIST { 
-	publishDir "$params.data_dir", mode: "copy"
-
 	input:
 		path raw_transcripts
 
@@ -196,6 +194,7 @@ process CREATE_GENE_MATRIX {
 		path "kallisto_aligned_reads_qc.csv", emit: kallisto_qc_table
 		path "all_kallisto_abundance_obj.rds"
 		path "kallisto_removal_info.txt"
+		path "transcript_to_gene_list.csv"
 
 	shell:
 	'''
