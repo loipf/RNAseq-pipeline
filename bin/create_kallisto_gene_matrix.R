@@ -33,7 +33,7 @@ reads_qc_table =  data.frame(fread(READS_QC_TABLE_FILE, header = T), stringsAsFa
 ############################################
 ### read in all kallisto files and create gene counts
 
-processed_samples = sapply(KALLISTO_FILES, function(file_name) { strsplit(basename(file_name),"_")[[1]][1] } )
+processed_samples = sapply(KALLISTO_FILES, function(file_name) { gsub("_abundance.h5","",basename(file_name)) } )
 kallisto_abundance_obj <- tximport(KALLISTO_FILES, type = "kallisto", txOut = TRUE,  importer = tximport:::read_kallisto_h5)
 
 ### add sample names to colnames
@@ -105,7 +105,7 @@ fwrite(data.frame(gene_matrix), "kallisto_gene_counts.csv", quote=F, row.names=T
 
 
 ############################################
-### DESeq2 normalization - problem with package installation in docker
+### DESeq2 normalization
 dummy_colData = data.frame(rep(1, ncol(gene_matrix)), row.names=colnames(gene_matrix))
 dds = DESeqDataSetFromMatrix(round(gene_matrix), dummy_colData, design = ~1)  # no covariates included
 dds <- estimateSizeFactors(dds)
@@ -122,47 +122,6 @@ fwrite(data.frame(gene_matrix_vst), "kallisto_gene_counts_norm_sf_vst.csv", quot
 
 
 
-
-# 
-# ### only output estimated size factors to see filtering
-# ### equals DESeq2::estimateSizeFactorsForMatrix but problem install package on docker
-# estimateSizeFactorsForMatrix <- function (counts, locfunc = stats::median, geoMeans, controlGenes) {
-#   if (missing(geoMeans)) {
-#     incomingGeoMeans <- FALSE
-#     loggeomeans <- rowMeans(log(counts))
-#   }
-#   else {
-#     incomingGeoMeans <- TRUE
-#     if (length(geoMeans) != nrow(counts)) {
-#       stop("geoMeans should be as long as the number of rows of counts")
-#     }
-#     loggeomeans <- log(geoMeans)
-#   }
-#   if (all(is.infinite(loggeomeans))) {
-#     stop("every gene contains at least one zero, cannot compute log geometric means")
-#   }
-#   sf <- if (missing(controlGenes)) {
-#     apply(counts, 2, function(cnts) {
-#       exp(locfunc((log(cnts) - loggeomeans)[is.finite(loggeomeans) & 
-#                                               cnts > 0]))
-#     })
-#   }
-#   else {
-#     if (!(is.numeric(controlGenes) | is.logical(controlGenes))) {
-#       stop("controlGenes should be either a numeric or logical vector")
-#     }
-#     loggeomeansSub <- loggeomeans[controlGenes]
-#     apply(counts[controlGenes, , drop = FALSE], 2, function(cnts) {
-#       exp(locfunc((log(cnts) - loggeomeansSub)[is.finite(loggeomeansSub) & 
-#                                                  cnts > 0]))
-#     })
-#   }
-#   if (incomingGeoMeans) {
-#     sf <- sf/exp(mean(log(sf)))
-#   }
-#   sf
-# }
-# 
 # 
 # # gene_matrix = gene_matrix[!rowSums(gene_matrix) > 10,]   ### low level genes
 # size_factors = estimateSizeFactorsForMatrix(gene_matrix)
