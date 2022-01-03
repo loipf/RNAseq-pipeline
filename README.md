@@ -47,6 +47,13 @@ best to run with a new clear folder structure as not all new results do overwrit
 check quality reports in `data/quality_reports` to exclude problematic samples.
 
 
+additional, an 3' and 5' adapter sequence (file) can be specified with the nextflow arguments `--adapter_3_seq_file [sequence|file.fasta]` and `--adapter_5_seq_file [sequence|file.fasta]` or in the `main.nf` file. if a file is provided, it must be structured like the following example:
+```
+> adapter_3_batch_01
+AANTGG
+> adapter_3_batch_02
+GATCGG
+```
 
 
 

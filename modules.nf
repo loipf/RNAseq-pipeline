@@ -70,7 +70,6 @@ process RM_DUPLICATE_TRANSCRIPTS {
 
 
 
-
 process PREPROCESS_READS { 
 	tag "$sample_id"
 	publishDir "$params.data_dir/reads_prepro", pattern:"*cutadapt_output.txt", mode: "copy", saveAs: { filename -> "${sample_id}/$filename" }
@@ -80,6 +79,8 @@ process PREPROCESS_READS {
 	input:
 		tuple val(sample_id), path(reads) 
 		val num_threads
+		path adapter_3_seq_file
+		path adapter_5_seq_file
 
 	output:
 		tuple val(sample_id), path("${sample_id}_prepro_1.fastq.gz"), path("${sample_id}_prepro_2.fastq.gz"), emit: reads_prepro
@@ -87,9 +88,41 @@ process PREPROCESS_READS {
 
 	shell:
 	'''
+	
+	### combine multiple seq files in the same sample directory with same direction together
+	### theoretically sorting not needed but to be ordered
+	reads_sorted=$(echo !{reads} | xargs -n1 | sort | xargs)
+	reads_sorted_1=$(find $reads_sorted -name "*_1.fq.gz" -o -name "*_1.fastq.gz")
+	reads_sorted_2=$(find $reads_sorted -name "*_2.fq.gz" -o -name "*_2.fastq.gz")
+	cat $reads_sorted_1 > raw_reads_connected_1.fastq.gz
+	cat $reads_sorted_2 > raw_reads_connected_2.fastq.gz
 
-	cutadapt --cores=!{num_threads} --max-n 0.1 --pair-filter=any --minimum-length 10 -o !{sample_id}_prepro_1.fastq.gz -p !{sample_id}_prepro_2.fastq.gz !{reads} > !{sample_id}_cutadapt_output.txt
-
+	if [[ (!{adapter_3_seq_file} == "NO_FILE") || (!{adapter_5_seq_file} == "NO_FILE2") ]]
+	then
+		### run with adapter sequences
+		
+		### adapter 3' input as string or file
+		if [[ !{adapter_3_seq_file} == *".fasta"* ]]
+		then
+	  		ADAPTER_3=file:!{adapter_3_seq_file}
+		else
+			ADAPTER_3="!{adapter_3_seq_file}"
+		fi
+		### adapter 5' input as string or file
+		if [[ !{adapter_5_seq_file} == *".fasta"* ]]
+		then
+	  		ADAPTER_5=file:!{adapter_5_seq_file}
+		else
+			ADAPTER_5="!{adapter_5_seq_file}"
+		fi
+		
+		cutadapt --cores=!{num_threads} --max-n 0.1 --discard-trimmed --pair-filter=any --minimum-length 10 -a $ADAPTER_3 -A $ADAPTER_5 -o !{sample_id}_prepro_1.fastq.gz -p !{sample_id}_prepro_2.fastq.gz raw_reads_connected_1.fastq.gz raw_reads_connected_2.fastq.gz > !{sample_id}_cutadapt_output.txt
+		
+	else
+		### run without adapter sequence
+		cutadapt --cores=!{num_threads} --max-n 0.1 --discard-trimmed --pair-filter=any --minimum-length 10 -o !{sample_id}_prepro_1.fastq.gz -p !{sample_id}_prepro_2.fastq.gz raw_reads_connected_1.fastq.gz raw_reads_connected_2.fastq.gz > !{sample_id}_cutadapt_output.txt
+	fi
+	
 	'''
 }
 

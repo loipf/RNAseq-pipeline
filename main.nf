@@ -42,6 +42,10 @@ params.reads_dir	= "$params.project_dir/data/reads_raw"
 params.reads		= "$params.reads_dir/*/*_{1,2}.{fastq,fq,fastq.gz,fq.gz}"
 params.data_dir		= "$params.project_dir/data"
 
+// either give both or none
+params.adapter_3_seq_file	= file("NO_FILE")
+params.adapter_5_seq_file	= file("NO_FILE2")
+
 
 /*
  * other parameters
@@ -59,7 +63,8 @@ RNA-SEQ PIPELINE
 reads			: $params.reads
 data_dir		: $params.data_dir
 ensembl_version	: $params.ensembl_release
-
+adapter_3_seq_file	: $params.adapter_3_seq_file
+adapter_5_seq_file	: $params.adapter_5_seq_file
 ===================================================
 
 """
@@ -80,7 +85,7 @@ workflow {
 	CREATE_T2G_LIST(CREATE_KALLISTO_INDEX.out.raw_transcripts)
 	RM_DUPLICATE_TRANSCRIPTS(CREATE_KALLISTO_INDEX.out.raw_transcripts)
 
-	PREPROCESS_READS(channel_reads, params.num_threads)
+	PREPROCESS_READS(channel_reads, params.num_threads, params.adapter_3_seq_file, params.adapter_5_seq_file)
 	channel_reads_prepro = PREPROCESS_READS.out.reads_prepro.map{ it -> tuple(it[0], tuple(it[1], it[2])) }
 	FASTQC_READS_RAW(channel_reads, params.num_threads)
 	FASTQC_READS_PREPRO(channel_reads_prepro, params.num_threads)
