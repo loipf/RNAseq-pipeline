@@ -15,7 +15,7 @@ PER_READS_ALIGNED = 70   ### percentage quality threshold
 json_file_list = list.files(".", pattern="*.json", full.names = T)
 
 get_json_sample_list <- function(json_file_sample) {
-  sample_id = strsplit(basename(json_file_sample), "_")[[1]][1]
+  sample_id = gsub("_run_info.json","",basename(json_file_sample))
   sample_json = fromJSON(file = json_file_sample)
   return(c(sample_id,sample_json[["n_processed"]], sample_json[["n_pseudoaligned"]], sample_json[["p_pseudoaligned"]], sample_json[["n_unique"]], sample_json[["p_unique"]]))
 }
