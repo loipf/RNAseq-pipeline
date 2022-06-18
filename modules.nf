@@ -228,6 +228,7 @@ process CREATE_GENE_MATRIX {
 		path "all_kallisto_abundance_obj.rds"
 		path "kallisto_removal_info.txt"
 		path "transcript_to_gene_list.csv"
+		path "kallisto_gene_anno.csv"
 
 	shell:
 	'''

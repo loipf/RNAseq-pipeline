@@ -30,6 +30,7 @@ colnames(unique_trans_table) = "transcript_id"
 
 reads_qc_table =  data.frame(fread(READS_QC_TABLE_FILE, header = T), stringsAsFactors = FALSE, row.names = 1)
 
+
 ############################################
 ### read in all kallisto files and create gene counts
 
@@ -55,13 +56,16 @@ saveRDS(kallisto_abundance_obj, file="all_kallisto_abundance_obj.rds")
 sink(PROCESSING_INFO_FILE)
 cat("\n\n### remove 100% sequence identity transcripts to avoid gene mapping bias\n")
 
+### sum up to either
+### "gene_id": ensembl_id latest version
+### or "gene_symbol": gene symbol (to avoid haplotype mapping) - current implementation
 
 ### consider only unique transcripts to avoid double gene mapping bias
-merged_unique_trans_gene = merge(unique_trans_table, tr2g_matrix[,c("transcript_id","gene_id")])
-identical_transcripts_removed = setdiff(tr2g_matrix[["gene_id"]],merged_unique_trans_gene[["gene_id"]])
-cat("genes with identical transcripts removed: ", length(identical_transcripts_removed),"/",unique(length(tr2g_matrix[["gene_id"]])),"\n")
+merged_unique_trans_gene = merge(unique_trans_table, tr2g_matrix[,c("transcript_id","gene_symbol")])
+identical_transcripts_removed = setdiff(tr2g_matrix[["gene_symbol"]], merged_unique_trans_gene[["gene_symbol"]])
+cat("genes with identical transcripts removed: ", length(identical_transcripts_removed),"/",unique(length(tr2g_matrix[["gene_symbol"]])),"\n")
 
-kallisto_gene_obj = summarizeToGene(kallisto_abundance_obj, merged_unique_trans_gene[,c("transcript_id","gene_id")])
+kallisto_gene_obj = summarizeToGene(kallisto_abundance_obj, merged_unique_trans_gene[,c("transcript_id","gene_symbol")])
 gene_matrix = kallisto_gene_obj[["counts"]]
 cat("gene count matrix dimension (genes x samples): ", dim(gene_matrix), "\n")
 
@@ -69,39 +73,48 @@ cat("gene count matrix dimension (genes x samples): ", dim(gene_matrix), "\n")
 gene_matrix = gene_matrix[!duplicated(rownames(gene_matrix)),]
 cat("gene count matrix with genes with same version removed: ", dim(gene_matrix), "\n")
 
-# ### only keep genes located on the chromosomes without scaffold  
-# tr2g_matrix_split = tr2g_matrix %>% separate(chromosome, sep=":", into=c("chr_scaffold","chr_genome","chr_num","chr_start","chr_end","chr_direction"), fill="left")
-# CHROMOSOME_NAMES = c(as.character(1:22), "X","Y","MT")
-# genes_on_chromosomes = subset(tr2g_matrix_split, is.na(chr_scaffold) & chr_num %in% CHROMOSOME_NAMES)[["gene_id"]]
-# gene_matrix = gene_matrix[rownames(gene_matrix) %in% unique(genes_on_chromosomes),]
-# cat("gene count matrix with only genes located on main chromosomes: ", dim(gene_matrix),"\n")
+### only keep genes located on the chromosomes without scaffold
+tr2g_matrix_split = tr2g_matrix %>% separate(chromosome, sep=":", into=c("chr_scaffold","chr_genome","chr_num","chr_start","chr_end","chr_direction"), fill="left")
+CHROMOSOME_NAMES = c(as.character(1:22), "X","Y","MT")
+genes_on_chromosomes = subset(tr2g_matrix_split, is.na(chr_scaffold) & chr_num %in% CHROMOSOME_NAMES)[["gene_symbol"]]
+gene_matrix = gene_matrix[rownames(gene_matrix) %in% unique(genes_on_chromosomes),]
+cat("gene count matrix with only genes located on main chromosomes: ", dim(gene_matrix),"\n")
 
+# ### only for ensembl ids
+# ### sort genes to newest version first, remove .version and remove duplicated gene names while keeping newest
+# gene_version_df = data.frame(gene_matrix_id = rownames(gene_matrix), stringsAsFactors = F)
+# gene_version_df = gene_version_df[order(nchar(gene_version_df$gene_matrix_id), gene_version_df$gene_matrix_id, decreasing = TRUE), ,drop=F]   # to correctly handle .1 .2 .10
+# gene_version_df$gene_matrix_id_wo_version = gsub('\\.[0-9]*$', "", gene_version_df$gene_matrix_id)
+# gene_version_df$is_duplicated = duplicated(gene_version_df$gene_matrix_id_wo_version)
+# gene_version_df = gene_version_df[gene_version_df$is_duplicated==F,]  ### remove duplicates
+# gene_matrix = gene_matrix[gene_version_df$gene_matrix_id,]
+# rownames(gene_matrix) = gene_version_df$gene_matrix_id_wo_version
+# gene_matrix = gene_matrix[order(rownames(gene_matrix), decreasing = F),]  ### sort increasing again
+# cat("gene count matrix without duplicated gene names: ", dim(gene_matrix),"\n")
 
-### sort genes to newest version first, remove .version and remove duplicated gene names while keeping newest
-gene_version_df = data.frame(gene_matrix_id = rownames(gene_matrix), stringsAsFactors = F)
-gene_version_df = gene_version_df[order(nchar(gene_version_df$gene_matrix_id), gene_version_df$gene_matrix_id, decreasing = TRUE), ,drop=F]   # to correctly handle .1 .2 .10
-gene_version_df$gene_matrix_id_wo_version = gsub('\\.[0-9]*$', "", gene_version_df$gene_matrix_id)
-gene_version_df$is_duplicated = duplicated(gene_version_df$gene_matrix_id_wo_version)
-gene_version_df = gene_version_df[gene_version_df$is_duplicated==F,]  ### remove duplicates
+# tr2g_matrix_merge = merge(tr2g_matrix, gene_version_df[,c("gene_matrix_id","gene_matrix_id_wo_version")], by.x="gene_id", by.y="gene_matrix_id", all.x=T)
+# colnames(tr2g_matrix_merge)[grepl("gene_matrix_id_wo_version",colnames(tr2g_matrix_merge))] = "gene_count_matrix_id"
 
-gene_matrix = gene_matrix[gene_version_df$gene_matrix_id,]
-rownames(gene_matrix) = gene_version_df$gene_matrix_id_wo_version
-gene_matrix = gene_matrix[order(rownames(gene_matrix), decreasing = F),]  ### sort increasing again
-cat("gene count matrix without duplicated gene names: ", dim(gene_matrix),"\n")
-
-tr2g_matrix_merge = merge(tr2g_matrix, gene_version_df[,c("gene_matrix_id","gene_matrix_id_wo_version")], by.x="gene_id", by.y="gene_matrix_id", all.x=T)
-colnames(tr2g_matrix_merge)[grepl("gene_matrix_id_wo_version",colnames(tr2g_matrix_merge))] = "gene_count_matrix_id"
+tr2g_matrix_merge = tr2g_matrix
 fwrite(data.frame(tr2g_matrix_merge), "transcript_to_gene_list.csv", quote=F, row.names=F)
-
-
 
 cat("\n\n### Rsession info\n")
 sessionInfo()   ### to output r-package versions
 sink()
-
   
 ### output gene count matrix
 fwrite(data.frame(gene_matrix), "kallisto_gene_counts.csv", quote=F, row.names=T)  # genes x samples 
+
+
+### create clean gene anno file
+### step to filter out patches and keep only real chrom positions
+t2g_list_split = tr2g_matrix_merge %>% separate(chromosome, sep=":", into=c("chr_scaffold","chr_genome","chr_num","chr_start","chr_end","chr_direction"), fill="left")
+t2g_list_split = subset(t2g_list_split, chr_num %in% CHROMOSOME_NAMES)
+matched_t2g = t2g_list_split[match(rownames(gene_matrix), t2g_list_split$gene_symbol),]  ### sort identical
+colnames(matched_t2g)[colnames(matched_t2g)=="gene_id"] = 'ensembl_id_version'
+matched_t2g$ensembl_id = gsub('\\.[0-9]*$', "", matched_t2g$ensembl_id_version) 
+out_gene_anno = matched_t2g[,c("gene_symbol","ensembl_id","chr_genome","chr_num","chr_start","chr_end","chr_direction","gene_biotype")]
+fwrite(out_gene_anno, "kallisto_gene_anno.csv", quote=F, row.names = T) 
 
 
 ############################################

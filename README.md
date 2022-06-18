@@ -18,7 +18,7 @@ now either replace the Docker container hash (last output line from previous bui
 ---
 ### run quantification pipeline
 
-no preprocessing or quality fitering is performed and need to be done by the user! (check file `kallisto_aligned_reads_qc.csv` for `p_pseudoaligned` >70% and `DESeq2_size_factor` around 0.6-1.4, maybe keep only genes on main chromosoms)
+no pre-processing or quality improvement is performed and must be done by the user! (check file `kallisto_aligned_reads_qc.csv` for `p_pseudoaligned` >70% and `DESeq2_size_factor` around 0.6-1.4). sums up transcripts to gene_symbols (without haplotype and scaffold genes).
 
 it can be run locally with downloaded github-repo and edited `nextflow.config` file with:
 ```sh
