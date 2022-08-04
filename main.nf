@@ -40,7 +40,7 @@ params.project_dir	= "$projectDir"
 params.reads_dir	= "$params.project_dir/data/reads_raw"
 
 params.reads		= "$params.reads_dir/*/*_{1,2}.{fastq,fq,fastq.gz,fq.gz}"
-params.data_dir		= "$params.project_dir/data"
+params.data_dir	= "$params.project_dir/data"
 
 // either give both or none
 params.adapter_3_seq_file	= file("NO_FILE")
@@ -51,8 +51,9 @@ params.adapter_5_seq_file	= file("NO_FILE2")
  * other parameters
  */
 
-params.num_threads		= 5
+params.num_threads	= 5
 params.ensembl_release	= 101
+params.include_ncrna	= true  // false
 
 
 

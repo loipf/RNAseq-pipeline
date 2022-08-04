@@ -11,21 +11,33 @@ process CREATE_KALLISTO_INDEX {
 
 	output:
 		path "kallisto_transcripts.idx", emit: kallisto_index
-		path "Homo_sapiens.GRCh38.cdna_ncrna.fa.gz", emit: raw_transcripts
+		path "index_Homo_sapiens.GRCh38.cdna*", emit: raw_transcripts
 
 	shell:
 	'''
 	curl --remote-name ftp://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh38.cdna.all.fa.gz
-	curl --remote-name ftp://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/ncrna/Homo_sapiens.GRCh38.ncrna.fa.gz
+	
+	if [ !{params.include_ncrna} = 'true' ]; then
+		### both coding and noncoding
+		curl --remote-name ftp://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/ncrna/Homo_sapiens.GRCh38.ncrna.fa.gz
 
-	gunzip Homo_sapiens.GRCh38.cdna.all.fa.gz
-	gunzip Homo_sapiens.GRCh38.ncrna.fa.gz
+		gunzip Homo_sapiens.GRCh38.cdna.all.fa.gz
+		gunzip Homo_sapiens.GRCh38.ncrna.fa.gz
 
-	### combine coding and uncoding transcripts
-	cat Homo_sapiens.GRCh38.cdna.all.fa Homo_sapiens.GRCh38.ncrna.fa > Homo_sapiens.GRCh38.cdna_ncrna.fa
-	gzip -v Homo_sapiens.GRCh38.cdna_ncrna.fa
+		### combine coding and uncoding transcripts
+		cat Homo_sapiens.GRCh38.cdna.all.fa Homo_sapiens.GRCh38.ncrna.fa > index_Homo_sapiens.GRCh38.cdna_ncrna.fa
+		gzip -v index_Homo_sapiens.GRCh38.cdna_ncrna.fa
 
-	kallisto index -k 31 -i kallisto_transcripts.idx Homo_sapiens.GRCh38.cdna_ncrna.fa.gz
+		kallisto index -k 31 -i kallisto_transcripts.idx index_Homo_sapiens.GRCh38.cdna_ncrna.fa.gz
+
+	else
+		### only coding
+		mv Homo_sapiens.GRCh38.cdna.all.fa.gz index_Homo_sapiens.GRCh38.cdna.fa.gz
+		kallisto index -k 31 -i kallisto_transcripts.idx index_Homo_sapiens.GRCh38.cdna.fa.gz
+	fi
+	
+	
+	
 	'''
 }
 
