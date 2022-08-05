@@ -54,7 +54,7 @@ process CREATE_T2G_LIST {
 	gunzip -c $raw_transcripts > raw_transcripts.fa
 
 	perl -lne 'print "\$1 \$4" while /^>(.+gene_symbol:\\S+)(.+((HGNC:\\S+)\\]))?/gi' raw_transcripts.fa | sed 's/\\s/,/g' > transcript_to_gene_list.csv
-	sed  -i '1i transcript_id,transcript_biotype,chromosome,gene_id,gene_biotype,transcript_biotype,gene_symbol,hgnc_id' transcript_to_gene_list.csv  ### add header
+	sed  -i '1i transcript_id,transcript_type,chromosome,gene_id,gene_biotype,transcript_biotype,gene_symbol,hgnc_id' transcript_to_gene_list.csv  ### add header
 	sed -i 's/chromosome://g; s/gene://g; s/gene_biotype://g; s/transcript_biotype://g; s/gene_symbol://g; s/HGNC://g;' transcript_to_gene_list.csv ### remove pre-strings
 
 	"""
