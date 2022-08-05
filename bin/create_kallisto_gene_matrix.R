@@ -113,7 +113,7 @@ t2g_list_split = subset(t2g_list_split, chr_num %in% CHROMOSOME_NAMES)
 matched_t2g = t2g_list_split[match(rownames(gene_matrix), t2g_list_split$gene_symbol),]  ### sort identical
 colnames(matched_t2g)[colnames(matched_t2g)=="gene_id"] = 'ensembl_id_version'
 matched_t2g$ensembl_id = gsub('\\.[0-9]*$', "", matched_t2g$ensembl_id_version) 
-out_gene_anno = matched_t2g[,c("gene_symbol","ensembl_id","chr_genome","chr_num","chr_start","chr_end","chr_direction","gene_biotype")]
+out_gene_anno = matched_t2g[,c("gene_symbol","ensembl_id","hgnc_id","chr_genome","chr_num","chr_start","chr_end","chr_direction","gene_biotype")]
 fwrite(out_gene_anno, "kallisto_gene_anno.csv", quote=F, row.names = T) 
 
 
