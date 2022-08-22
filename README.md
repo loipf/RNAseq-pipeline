@@ -33,13 +33,23 @@ nextflow run loipf/RNAseq-pipeline -r main --project_dir /path/to/folder --reads
 for this execution to work properly, you have to be in the current project directory.
 
 
-optional extendable with:
+nextflow optional extendable with:
 ```sh
 -resume
 -with-report report_RNAseq-pipeline
 -with-timeline timeline_RNAseq-pipeline
 -w work_dir
 ```
+
+pipeline optional extendable with:
+```sh
+-- num_threads 5
+-- ensembl_release 101
+-- include_ncrna true   # false
+-- nextflow_stageInMode copy   # symlink
+```
+
+ 
 
 by default, all output will be saved into the `data` folder of the current directory.
 best to run with a new clear folder structure as not all new results do overwrite old ones.
