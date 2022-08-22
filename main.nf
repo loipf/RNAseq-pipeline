@@ -54,7 +54,7 @@ params.adapter_5_seq_file	= file("NO_FILE2")
 params.num_threads	= 5
 params.ensembl_release	= 101
 params.include_ncrna	= true  // false
-// params.nextflow_stageInMode	= "copy" // avoids permission denied error, otherwise "symlink" - not working yet
+params.nextflow_stageInMode	= "symlink" // "copy" avoids permission denied error
 
 
 

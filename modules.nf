@@ -17,6 +17,9 @@ process CREATE_KALLISTO_INDEX {
 	'''
 	curl --remote-name ftp://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh38.cdna.all.fa.gz
 	
+	### fast test kallisto file
+	# curl -o Homo_sapiens.GRCh38.cdna.all.fa.gz ftp://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/ncrna/Homo_sapiens.GRCh38.ncrna.fa.gz
+	
 	if [ !{params.include_ncrna} = 'true' ]; then
 		### both coding and noncoding
 		curl --remote-name ftp://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/ncrna/Homo_sapiens.GRCh38.ncrna.fa.gz
@@ -85,9 +88,8 @@ process RM_DUPLICATE_TRANSCRIPTS {
 process PREPROCESS_READS { 
 	tag "$sample_id"
 	publishDir "$params.data_dir/reads_prepro", pattern:"*cutadapt_output.txt", mode: "copy", saveAs: { filename -> "${sample_id}/$filename" }
-	stageInMode = 'copy'   // avoids permission denied error
+	stageInMode = "$params.nextflow_stageInMode"
 	cache false
-	//stageInMode = "$params.nextflow_stageInMode"
 
 	input:
 		tuple val(sample_id), path(reads) 
@@ -105,13 +107,19 @@ process PREPROCESS_READS {
 	### combine multiple seq files in the same sample directory with same direction together
 	### theoretically sorting not needed but to be ordered
 	reads_sorted=$(echo !{reads} | xargs -n1 | sort | xargs)
-	reads_sorted_1=$(find $reads_sorted -name "*_1.fq.gz" -o -name "*_1.fastq.gz")
-	reads_sorted_2=$(find $reads_sorted -name "*_2.fq.gz" -o -name "*_2.fastq.gz")
+	reads_sorted_1=$(find $reads_sorted -name "*_1.fq*" -o -name "*_1.fastq*")
+	reads_sorted_2=$(find $reads_sorted -name "*_2.fq*" -o -name "*_2.fastq*")
+	
 	cat $reads_sorted_1 > raw_reads_connected_1.fastq.gz
 	cat $reads_sorted_2 > raw_reads_connected_2.fastq.gz
-
-	if [[ (!{adapter_3_seq_file} == "NO_FILE") || (!{adapter_5_seq_file} == "NO_FILE2") ]]
+	
+	
+	if [[ (!{adapter_3_seq_file} == "NO_FILE") && (!{adapter_5_seq_file} == "NO_FILE2") ]]
 	then
+		### run without adapter sequence
+		cutadapt --cores=!{num_threads} --max-n 0.1 --discard-trimmed --pair-filter=any --minimum-length 10 -o !{sample_id}_prepro_1.fastq.gz -p !{sample_id}_prepro_2.fastq.gz raw_reads_connected_1.fastq.gz raw_reads_connected_2.fastq.gz > !{sample_id}_cutadapt_output.txt	
+	
+	else
 		### run with adapter sequences
 		
 		### adapter 3' input as string or file
@@ -121,6 +129,7 @@ process PREPROCESS_READS {
 		else
 			ADAPTER_3="!{adapter_3_seq_file}"
 		fi
+		
 		### adapter 5' input as string or file
 		if [[ !{adapter_5_seq_file} == *".fasta"* ]]
 		then
@@ -130,10 +139,6 @@ process PREPROCESS_READS {
 		fi
 		
 		cutadapt --cores=!{num_threads} --max-n 0.1 --discard-trimmed --pair-filter=any --minimum-length 10 -a $ADAPTER_3 -A $ADAPTER_5 -o !{sample_id}_prepro_1.fastq.gz -p !{sample_id}_prepro_2.fastq.gz raw_reads_connected_1.fastq.gz raw_reads_connected_2.fastq.gz > !{sample_id}_cutadapt_output.txt
-		
-	else
-		### run without adapter sequence
-		cutadapt --cores=!{num_threads} --max-n 0.1 --discard-trimmed --pair-filter=any --minimum-length 10 -o !{sample_id}_prepro_1.fastq.gz -p !{sample_id}_prepro_2.fastq.gz raw_reads_connected_1.fastq.gz raw_reads_connected_2.fastq.gz > !{sample_id}_cutadapt_output.txt
 	fi
 	
 	'''
@@ -145,10 +150,8 @@ process PREPROCESS_READS {
 process FASTQC_READS_RAW { 
 	tag "$sample_id"
 	publishDir "$params.data_dir/reads_raw", mode: "copy", overwrite: false, saveAs: { filename -> "${sample_id}/$filename" }
-	stageInMode = 'copy'   // avoids permission denied error
+	stageInMode = "$params.nextflow_stageInMode"
 	cache false
-	//stageInMode = "$params.nextflow_stageInMode"
-	//cache true
 
 	input:
 		tuple val(sample_id), path(reads) 
