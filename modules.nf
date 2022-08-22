@@ -110,8 +110,20 @@ process PREPROCESS_READS {
 	reads_sorted_1=$(find $reads_sorted -name "*_1.fq*" -o -name "*_1.fastq*")
 	reads_sorted_2=$(find $reads_sorted -name "*_2.fq*" -o -name "*_2.fastq*")
 	
-	cat $reads_sorted_1 > raw_reads_connected_1.fastq.gz
-	cat $reads_sorted_2 > raw_reads_connected_2.fastq.gz
+	cat $reads_sorted_1 > raw_reads_connected_1.fastq
+	cat $reads_sorted_2 > raw_reads_connected_2.fastq
+	
+	if !(file raw_reads_connected_1.fastq | grep -q compressed ) ; then
+     		gzip raw_reads_connected_1.fastq
+	else
+		mv raw_reads_connected_1.fastq raw_reads_connected_1.fastq.gz
+	fi
+	
+	if !(file raw_reads_connected_2.fastq | grep -q compressed ) ; then
+     		gzip raw_reads_connected_2.fastq
+	else
+		mv raw_reads_connected_2.fastq raw_reads_connected_2.fastq.gz
+	fi
 	
 	
 	if [[ (!{adapter_3_seq_file} == "NO_FILE") && (!{adapter_5_seq_file} == "NO_FILE2") ]]
