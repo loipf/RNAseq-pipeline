@@ -85,8 +85,9 @@ process RM_DUPLICATE_TRANSCRIPTS {
 process PREPROCESS_READS { 
 	tag "$sample_id"
 	publishDir "$params.data_dir/reads_prepro", pattern:"*cutadapt_output.txt", mode: "copy", saveAs: { filename -> "${sample_id}/$filename" }
-	stageInMode = "$params.nextflow_stageInMode"
+	stageInMode = 'copy'   // avoids permission denied error
 	cache false
+	//stageInMode = "$params.nextflow_stageInMode"
 
 	input:
 		tuple val(sample_id), path(reads) 
@@ -144,8 +145,10 @@ process PREPROCESS_READS {
 process FASTQC_READS_RAW { 
 	tag "$sample_id"
 	publishDir "$params.data_dir/reads_raw", mode: "copy", overwrite: false, saveAs: { filename -> "${sample_id}/$filename" }
-	stageInMode = "$params.nextflow_stageInMode"
+	stageInMode = 'copy'   // avoids permission denied error
 	cache false
+	//stageInMode = "$params.nextflow_stageInMode"
+	//cache true
 
 	input:
 		tuple val(sample_id), path(reads) 

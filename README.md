@@ -46,7 +46,6 @@ pipeline optional extendable with:
 -- num_threads 5
 -- ensembl_release 101
 -- include_ncrna true   # false
--- nextflow_stageInMode copy   # symlink
 ```
 
  
