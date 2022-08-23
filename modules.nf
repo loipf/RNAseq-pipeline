@@ -110,19 +110,22 @@ process PREPROCESS_READS {
 	reads_sorted_1=$(find $reads_sorted -name "*_1.fq*" -o -name "*_1.fastq*")
 	reads_sorted_2=$(find $reads_sorted -name "*_2.fq*" -o -name "*_2.fastq*")
 	
+	reads_sorted_1_array=($reads_sorted_1)
+	reads_sorted_2_array=($reads_sorted_2)
+
 	### avoid unnecessary copy
-	if [[ ${#$reads_sorted_1[@]} -gt 1 ]]; then
+	if [[ ${#reads_sorted_1_array[@]} -gt 1 ]]; then
 		cat $reads_sorted_1 > raw_reads_connected_1.fastq
 	else
 		mv $reads_sorted_1 raw_reads_connected_1.fastq
 	fi
 
-	if [[ ${#$reads_sorted_2[@]} -gt 1 ]]; then
+	if [[ ${#reads_sorted_1_array[@]} -gt 1 ]]; then
 		cat $reads_sorted_2 > raw_reads_connected_2.fastq
 	else
 		mv $reads_sorted_2 raw_reads_connected_2.fastq
 	fi
-
+	
 	
 	### zip if it was not done yet, TODO make separate process with pigz -p threads	
 	if !(file raw_reads_connected_1.fastq | grep -q compressed ) ; then
