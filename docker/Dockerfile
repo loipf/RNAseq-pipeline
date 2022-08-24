@@ -4,7 +4,7 @@ MAINTAINER loipf
 
 RUN conda update --all
 
-RUN apt-get update && apt install -y procps gzip curl chrpath gcc
+RUN apt-get --allow-releaseinfo-change update && apt install -y procps gzip curl chrpath gcc pigz
 #RUN apt install -y build-essential aptitude libxml2-dev libssl-dev libcurl4-openssl-dev libxtst6 libgl1-mesa-glx
 
 RUN conda config --add channels defaults
@@ -28,7 +28,11 @@ RUN conda install -c bioconda bioconductor-deseq2
 RUN conda install -c bioconda bioconductor-rhdf5
 
 RUN R -e 'install.packages("pacman",repos = "http://cran.us.r-project.org")'
-RUN R -e 'pacman::p_load(BiocManager, knitr, data.table, plotly, ggplot2, pheatmap, hexbin, LSD, cowplot, rmarkdown, dplyr, tidyr, tximport, vsn, rjson, GenomeInfoDbData)'
+#RUN R -e 'pacman::p_load(BiocManager, knitr, data.table, plotly, ggplot2, pheatmap, hexbin, LSD, cowplot, rmarkdown, dplyr, tidyr, tximport, vsn, rjson, GenomeInfoDbData)'
+RUN R -e 'pacman::p_load(BiocManager, knitr, data.table, plotly, ggplot2, pheatmap, hexbin, LSD, cowplot, rmarkdown, dplyr, tidyr, tximport, vsn, GenomeInfoDbData)'
+
+### fix: package is not available (for R version 3.6.3)
+RUN R -e 'install.packages("https://cran.r-project.org/src/contrib/Archive/rjson/rjson_0.2.20.tar.gz", repos=NULL, type="source")'
 
 
 

@@ -107,37 +107,33 @@ process PREPROCESS_READS {
 	### combine multiple seq files in the same sample directory with same direction together
 	### theoretically sorting not needed but to be ordered
 	reads_sorted=$(echo !{reads} | xargs -n1 | sort | xargs)
-	reads_sorted_1=$(find $reads_sorted -name "*_1.fq*" -o -name "*_1.fastq*")
-	reads_sorted_2=$(find $reads_sorted -name "*_2.fq*" -o -name "*_2.fastq*")
-	
+	reads_sorted_array=($reads_sorted)
+
+	### compress if it is not
+	for read_file in "${reads_sorted_array[@]}"
+	do
+		if [[ $read_file != *.gz  ]]; then
+			pigz -p !{num_threads} $read_file
+		fi
+	done
+
+	reads_sorted_1=$(find . -name "*_1.fq.gz" -o -name "*_1.fastq.gz")
+	reads_sorted_2=$(find . -name "*_2.fq.gz" -o -name "*_2.fastq.gz")
+
 	reads_sorted_1_array=($reads_sorted_1)
 	reads_sorted_2_array=($reads_sorted_2)
 
 	### avoid unnecessary copy
 	if [[ ${#reads_sorted_1_array[@]} -gt 1 ]]; then
-		cat $reads_sorted_1 > raw_reads_connected_1.fastq
+		cat $reads_sorted_1 > raw_reads_connected_1.fastq.gz
 	else
-		mv $reads_sorted_1 raw_reads_connected_1.fastq
+		mv $reads_sorted_1 raw_reads_connected_1.fastq.gz
 	fi
 
 	if [[ ${#reads_sorted_1_array[@]} -gt 1 ]]; then
-		cat $reads_sorted_2 > raw_reads_connected_2.fastq
+		cat $reads_sorted_2 > raw_reads_connected_2.fastq.gz
 	else
-		mv $reads_sorted_2 raw_reads_connected_2.fastq
-	fi
-	
-	
-	### zip if it was not done yet, TODO make separate process with pigz -p threads	
-	if !(file raw_reads_connected_1.fastq | grep -q compressed ) ; then
-     		gzip raw_reads_connected_1.fastq
-	else
-		mv raw_reads_connected_1.fastq raw_reads_connected_1.fastq.gz
-	fi
-	
-	if !(file raw_reads_connected_2.fastq | grep -q compressed ) ; then
-     		gzip raw_reads_connected_2.fastq
-	else
-		mv raw_reads_connected_2.fastq raw_reads_connected_2.fastq.gz
+		mv $reads_sorted_2 raw_reads_connected_2.fastq.gz
 	fi
 	
 	
