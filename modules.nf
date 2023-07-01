@@ -117,8 +117,8 @@ process PREPROCESS_READS {
 		fi
 	done
 
-	reads_sorted_1=$(find . -name "*_1.fq.gz" -o -name "*_1.fastq.gz")
-	reads_sorted_2=$(find . -name "*_2.fq.gz" -o -name "*_2.fastq.gz")
+	reads_sorted_1=$(find . -name "*1.fq.gz" -o -name "*1.fastq.gz")
+	reads_sorted_2=$(find . -name "*2.fq.gz" -o -name "*2.fastq.gz")
 
 	reads_sorted_1_array=($reads_sorted_1)
 	reads_sorted_2_array=($reads_sorted_2)
