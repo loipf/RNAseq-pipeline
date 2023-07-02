@@ -77,11 +77,13 @@ adapter_5_seq_file	: $params.adapter_5_seq_file
  * main pipeline logic
  */
 workflow {
+	// extension from .fromFilePairs( params.reads ) to deal with multiple sequencing files in the same folder which get combined in module
 	channel_reads = Channel
-			.fromFilePairs( params.reads )
+			.fromPath(params.reads)
+			.map{ files -> tuple(files.getParent().getName(), files) }
+			.groupTuple()
 			.ifEmpty { error "cannot find any reads matching: ${params.reads}" }
 			.take( params.dev_samples )  // only consider a few files for debugging
-
 
 	CREATE_KALLISTO_INDEX(params.ensembl_release) 
 	CREATE_T2G_LIST(CREATE_KALLISTO_INDEX.out.raw_transcripts)
