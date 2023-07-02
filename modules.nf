@@ -89,7 +89,6 @@ process PREPROCESS_READS {
 	tag "$sample_id"
 	publishDir "$params.data_dir/reads_prepro", pattern:"*cutadapt_output.txt", mode: "copy", saveAs: { filename -> "${sample_id}/$filename" }
 	stageInMode = "$params.nextflow_stageInMode"
-	cache false
 
 	input:
 		tuple val(sample_id), path(reads) 
@@ -174,7 +173,6 @@ process FASTQC_READS_RAW {
 	tag "$sample_id"
 	publishDir "$params.data_dir/reads_raw", mode: "copy", overwrite: false, saveAs: { filename -> "${sample_id}/$filename" }
 	stageInMode = "$params.nextflow_stageInMode"
-	cache false
 
 	input:
 		tuple val(sample_id), path(reads) 
