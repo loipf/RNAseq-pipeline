@@ -125,22 +125,22 @@ process PREPROCESS_READS {
 
 	### avoid unnecessary copy
 	if [[ ${#reads_sorted_1_array[@]} -gt 1 ]]; then
-		cat $reads_sorted_1 > raw_reads_connected_1.fastq.gz
+		cat $reads_sorted_1 > !{sample_id}_raw_reads_connected_1.fastq.gz
 	else
-		mv $reads_sorted_1 raw_reads_connected_1.fastq.gz
+		mv $reads_sorted_1 !{sample_id}_raw_reads_connected_1.fastq.gz
 	fi
 
 	if [[ ${#reads_sorted_1_array[@]} -gt 1 ]]; then
-		cat $reads_sorted_2 > raw_reads_connected_2.fastq.gz
+		cat $reads_sorted_2 > !{sample_id}_raw_reads_connected_2.fastq.gz
 	else
-		mv $reads_sorted_2 raw_reads_connected_2.fastq.gz
+		mv $reads_sorted_2 !{sample_id}_raw_reads_connected_2.fastq.gz
 	fi
 	
 	
 	if [[ (!{adapter_3_seq_file} == "NO_FILE") && (!{adapter_5_seq_file} == "NO_FILE2") ]]
 	then
 		### run without adapter sequence
-		cutadapt --cores=!{num_threads} --max-n 0.1 --discard-trimmed --pair-filter=any --minimum-length 10 -o !{sample_id}_prepro_1.fastq.gz -p !{sample_id}_prepro_2.fastq.gz raw_reads_connected_1.fastq.gz raw_reads_connected_2.fastq.gz > !{sample_id}_cutadapt_output.txt	
+		cutadapt --cores=!{num_threads} --max-n 0.1 --discard-trimmed --pair-filter=any --minimum-length 10 -o !{sample_id}_prepro_1.fastq.gz -p !{sample_id}_prepro_2.fastq.gz !{sample_id}_raw_reads_connected_1.fastq.gz !{sample_id}_raw_reads_connected_2.fastq.gz > !{sample_id}_cutadapt_output.txt	
 	
 	else
 		### run with adapter sequences
@@ -161,7 +161,7 @@ process PREPROCESS_READS {
 			ADAPTER_5="!{adapter_5_seq_file}"
 		fi
 		
-		cutadapt --cores=!{num_threads} --max-n 0.1 --discard-trimmed --pair-filter=any --minimum-length 10 -a $ADAPTER_3 -A $ADAPTER_5 -o !{sample_id}_prepro_1.fastq.gz -p !{sample_id}_prepro_2.fastq.gz raw_reads_connected_1.fastq.gz raw_reads_connected_2.fastq.gz > !{sample_id}_cutadapt_output.txt
+		cutadapt --cores=!{num_threads} --max-n 0.1 --discard-trimmed --pair-filter=any --minimum-length 10 -a $ADAPTER_3 -A $ADAPTER_5 -o !{sample_id}_prepro_1.fastq.gz -p !{sample_id}_prepro_2.fastq.gz !{sample_id}_raw_reads_connected_1.fastq.gz !{sample_id}_raw_reads_connected_2.fastq.gz > !{sample_id}_cutadapt_output.txt
 	fi
 	
 	'''
