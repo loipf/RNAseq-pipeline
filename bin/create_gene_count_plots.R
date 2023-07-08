@@ -23,9 +23,9 @@ GENE_MATRIX_FILE = file.path(params$curr_dir, params$gene_matrix_file)
 GENE_MATRIX_FILE_VST = file.path(params$curr_dir, params$gene_matrix_file_vst)
 
 # ### read in everything
-reads_qc_table =  data.frame(fread(READS_QC_TABLE_FILE, header = T), stringsAsFactors = FALSE, row.names = 1)
-gene_matrix =  data.frame(fread(GENE_MATRIX_FILE, header = T), stringsAsFactors = FALSE, row.names = 1)  ### genes x samples
-gene_matrix_vst =  data.frame(fread(GENE_MATRIX_FILE_VST, header = T), stringsAsFactors = FALSE, row.names = 1)
+reads_qc_table =  data.frame(fread(READS_QC_TABLE_FILE, header = T), stringsAsFactors = FALSE, row.names = 1, check.names=F)
+gene_matrix =  data.frame(fread(GENE_MATRIX_FILE, header = T), stringsAsFactors = FALSE, row.names = 1, check.names=F)  ### genes x samples
+gene_matrix_vst =  data.frame(fread(GENE_MATRIX_FILE_VST, header = T), stringsAsFactors = FALSE, row.names = 1, check.names=F)
 gene_matrix_log2 = log2(gene_matrix+1)  ### vst has sf norm, log2 not
 
 
@@ -104,7 +104,7 @@ pheatmap(corr_matrix, main="sample correlation gene_counts",
 
 #' ## PCA
 pca_obj = prcomp(gene_matrix_vst, center=T, scale.=T)
-pca_df = data.frame(pca_obj$rotation, sample_id = colnames(gene_matrix_vst))
+pca_df = data.frame(pca_obj$rotation, sample_id = colnames(gene_matrix_vst), check.names=F))
 pca_explained_var = signif(pca_obj$sdev^2/sum(pca_obj$sdev^2)*100,3)
 
 p = ggplot(pca_df, aes(x=PC1, y=PC2, label=sample_id)) + geom_point() + theme_bw() +

@@ -161,7 +161,12 @@ process PREPROCESS_READS {
 			ADAPTER_5="!{adapter_5_seq_file}"
 		fi
 		
+		### remove full reads
 		cutadapt --cores=!{num_threads} --max-n 0.1 --discard-trimmed --pair-filter=any --minimum-length 10 -a $ADAPTER_3 -A $ADAPTER_5 -o !{sample_id}_prepro_1.fastq.gz -p !{sample_id}_prepro_2.fastq.gz !{sample_id}_raw_reads_connected_1.fastq.gz !{sample_id}_raw_reads_connected_2.fastq.gz > !{sample_id}_cutadapt_output.txt
+		
+		### only cut region and have min length
+		#cutadapt --cores=!{num_threads} --max-n 0.1 --pair-filter=any --minimum-length 100 -a $ADAPTER_3 -A $ADAPTER_5 -o !{sample_id}_prepro_1.fastq.gz -p !{sample_id}_prepro_2.fastq.gz !{sample_id}_raw_reads_connected_1.fastq.gz !{sample_id}_raw_reads_connected_2.fastq.gz > !{sample_id}_cutadapt_output.txt
+		
 	fi
 	
 	'''
