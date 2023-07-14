@@ -104,7 +104,7 @@ pheatmap(corr_matrix, main="sample correlation gene_counts",
 
 #' ## PCA
 pca_obj = prcomp(gene_matrix_vst, center=T, scale.=T)
-pca_df = data.frame(pca_obj$rotation, sample_id = colnames(gene_matrix_vst), check.names=F))
+pca_df = data.frame(pca_obj$rotation, sample_id = colnames(gene_matrix_vst), check.names=F)
 pca_explained_var = signif(pca_obj$sdev^2/sum(pca_obj$sdev^2)*100,3)
 
 p = ggplot(pca_df, aes(x=PC1, y=PC2, label=sample_id)) + geom_point() + theme_bw() +
